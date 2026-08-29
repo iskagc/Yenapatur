@@ -953,6 +953,58 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ── Firebase / sincronización ── */
+        .config-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: #4a3822;
+            color: var(--sand);
+            border-bottom: 1px solid var(--gold);
+            padding: 10px 18px;
+            font-size: 0.84rem;
+        }
+
+        .config-banner b { color: var(--gold); }
+
+        .config-banner code {
+            background: #2b1c14;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            color: var(--text-2);
+        }
+
+        .sync-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--text-3);
+            flex-shrink: 0;
+        }
+
+        .sync-dot.synced { background: var(--olive); box-shadow: 0 0 6px rgba(136,165,90,0.8); }
+        .sync-dot.error { background: var(--clay); }
+        .sync-dot.connecting { background: var(--gold); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        .loader {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 4px solid var(--border);
+            border-top-color: var(--gold);
+            margin: 0 auto 16px;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         /* ── Responsive ── */
         @media (max-width: 960px) {
             .main-layout { flex-direction: column; }
@@ -1000,10 +1052,19 @@
                 <circle cx="12" cy="12" r="9"/>
                 <path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/>
             </svg>
+            <span class="sync-dot connecting" id="syncDot"></span>
+            <span id="syncLabel">Conectando…</span>
+            <span style="opacity:0.4">|</span>
             <span id="headerCount">0 estudiantes</span>
         </span>
     </div>
 </header>
+
+<div class="config-banner" id="configBanner" style="display:none">
+    <b>&#9888;&#65039; Falta configurar Firebase.</b>
+    <span>Pega en <code>index.html</code> las credenciales de tu proyecto en el bloque <code>firebaseConfig</code>:
+        <code>Firebase Console &rarr; Configuración del proyecto &rarr; Tus apps</code>.</span>
+</div>
 
 <div class="main-layout">
     <aside class="sidebar">
@@ -1047,6 +1108,10 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
 <script>
 (function() {
@@ -1144,11 +1209,12 @@
     // ── Estado ──
     let students = [];
     let selectedStudentId = null;
-    let nextId = 1;
     let activeTab = 'schedule';
     let compareSel = null;      // { dayKey, block }
     let rankShowAll = false;
     let detailFilter = '';
+    let dataLoaded = false;
+    let db = null;
 
     // ── DOM ──
     const studentNameInput = document.getElementById('studentNameInput');
@@ -1161,6 +1227,9 @@
     const statsContent = document.getElementById('statsContent');
     const toastContainer = document.getElementById('toastContainer');
     const headerCount = document.getElementById('headerCount');
+    const syncDot = document.getElementById('syncDot');
+    const syncLabel = document.getElementById('syncLabel');
+    const configBanner = document.getElementById('configBanner');
 
     // ── Utilidades ──
     function escHtml(s) {
@@ -1199,51 +1268,152 @@
         studentCountrySelect.innerHTML = html;
     })();
 
-    // ── Gestión de estudiantes ──
+    // ── Firestore ──
+    // =================================================================
+    // CONFIGURACIÓN DE FIREBASE
+    // Rellena los valores de abajo con los de tu proyecto real en
+    // Firebase Console → Configuración del proyecto → Tus apps → SDK web.
+    // En Firestore crea la colección "students".
+    // =================================================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyXXXX-XXXXXXXXXXXX",
+        authDomain: "TU-PROYECTO.firebaseapp.com",
+        projectId: "TU-PROYECTO",
+        storageBucket: "TU-PROYECTO.appspot.com",
+        messagingSenderId: "000000000000",
+        appId: "1:000000000000:web:xxxxxxxxxxxxxxxx"
+    };
+
+    const configEsPlaceholder =
+        !firebaseConfig.projectId ||
+        firebaseConfig.projectId.indexOf('TU-PROYECTO') === 0 ||
+        !firebaseConfig.apiKey ||
+        firebaseConfig.apiKey.indexOf('AIzaSyXXXX') === 0;
+
+    function friendlyError(err) {
+        const code = err && err.code ? err.code : '';
+        const map = {
+            'permission-denied': 'Permiso denegado. Revisa las reglas de seguridad de Firestore.',
+            'unavailable': 'Sin conexión con Firestore. Revisa tu red.',
+            'not-found': 'La colección no existe (crea "students").',
+            'cancelled': 'Operación cancelada.'
+        };
+        return map[code] || (err && err.message ? err.message : 'Error desconocido');
+    }
+
+    function setSync(status) {
+        syncDot.className = 'sync-dot ' + status;
+        syncLabel.textContent = status === 'synced' ? 'En vivo'
+            : status === 'error' ? 'Sin conexión' : 'Conectando…';
+    }
+
+    function ts(v) {
+        if (!v) return 0;
+        if (typeof v.toMillis === 'function') return v.toMillis();
+        if (v instanceof Date) return v.getTime();
+        return Number(new Date(v)) || 0;
+    }
+
+    function attachListener() {
+        db.collection('students')
+            .orderBy('createdAt', 'asc')
+            .onSnapshot(snap => {
+                const list = [];
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const s = {
+                        id: doc.id,
+                        name: d.name || '',
+                        country: d.country || '',
+                        color: d.color || '#c96f43',
+                        schedule: d.schedule || {},
+                        createdAt: d.createdAt || null
+                    };
+                    DAY_KEYS.forEach(dk => { if (!s.schedule[dk]) s.schedule[dk] = []; });
+                    list.push(s);
+                });
+                list.sort((a, b) => ts(a.createdAt) - ts(b.createdAt) || a.name.localeCompare(b.name));
+                students = list;
+                if (!students.some(s => s.id === selectedStudentId)) {
+                    selectedStudentId = students.length ? students[0].id : null;
+                }
+                dataLoaded = true;
+                setSync('synced');
+                render();
+            }, err => {
+                dataLoaded = true;
+                setSync('error');
+                showToast('Error de sincronización: ' + friendlyError(err), true);
+            });
+    }
+
+    function bootstrap() {
+        if (configEsPlaceholder) {
+            configBanner.style.display = 'flex';
+            syncDot.className = 'sync-dot error';
+            syncLabel.textContent = 'Sin configurar';
+            dataLoaded = true;
+            render();
+            return;
+        }
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+        attachListener();
+        render();
+    }
+
+    // ── Gestión de estudiantes (escrituras en Firestore) ──
     function addStudent(name, country) {
         name = (name || '').trim();
         if (!name) { showToast('Escribe un nombre', true); return; }
         if (students.some(s => s.name.toLowerCase() === name.toLowerCase())) {
             showToast('Ya existe un estudiante con ese nombre', true); return;
         }
-        const student = {
-            id: nextId++,
+        const doc = {
             name: name,
             country: country || '',
-            color: getColor(students.length),
-            schedule: {}
+            color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+            schedule: {},
+            createdAt: new Date()
         };
-        DAY_KEYS.forEach(d => student.schedule[d] = []);
-        students.push(student);
-        selectedStudentId = student.id;
-        studentNameInput.value = '';
-        studentCountrySelect.value = '';
-        render();
-        const c = getCountry(student.country);
-        showToast(name + ' agregado' + (c ? ' (' + c.name + ')' : ''));
+        DAY_KEYS.forEach(d => doc.schedule[d] = []);
+        db.collection('students').add(doc).then(ref => {
+            selectedStudentId = ref.id;
+            studentNameInput.value = '';
+            studentCountrySelect.value = '';
+            const c = getCountry(doc.country);
+            showToast(name + ' agregado' + (c ? ' (' + c.name + ')' : ''));
+        }).catch(err => {
+            showToast('No se pudo agregar: ' + friendlyError(err), true);
+        });
     }
 
     function removeStudent(id) {
         const s = students.find(x => x.id === id);
-        students = students.filter(x => x.id !== id);
-        if (selectedStudentId === id) selectedStudentId = students.length ? students[0].id : null;
-        render();
-        if (s) showToast(s.name + ' eliminado');
+        db.collection('students').doc(id).delete().then(() => {
+            if (s) showToast(s.name + ' eliminado');
+        }).catch(err => {
+            showToast('No se pudo eliminar: ' + friendlyError(err), true);
+        });
     }
 
     function toggleBlock(dayKey, block) {
         const s = students.find(x => x.id === selectedStudentId);
         if (!s) return;
-        const arr = s.schedule[dayKey];
-        const idx = arr.indexOf(block);
-        if (idx >= 0) arr.splice(idx, 1);
-        else arr.push(block);
-        render();
+        const occupied = s.schedule[dayKey].includes(block);
+        const fv = firebase.firestore.FieldValue;
+        db.collection('students').doc(s.id).update({
+            ['schedule.' + dayKey]: occupied ? fv.arrayRemove(block) : fv.arrayUnion(block)
+        }).catch(err => {
+            showToast('No se pudo actualizar: ' + friendlyError(err), true);
+        });
     }
 
     function setStudentCountry(id, code) {
-        const s = students.find(x => x.id === id);
-        if (s) { s.country = code; render(); }
+        db.collection('students').doc(id).update({ country: code }).catch(err => {
+            showToast('No se pudo actualizar el país: ' + friendlyError(err), true);
+        });
     }
 
     // ── Tabs ──
@@ -1265,12 +1435,26 @@
     function render() {
         headerCount.textContent = students.length + ' estudiante' + (students.length === 1 ? '' : 's');
         renderStudentList();
+        if (!dataLoaded) {
+            scheduleContent.innerHTML = loaderHtml();
+            compareContent.innerHTML = loaderHtml();
+            statsContent.innerHTML = loaderHtml();
+            return;
+        }
         if (activeTab === 'schedule') renderSchedule();
         else if (activeTab === 'compare') renderCompare();
         else renderStats();
     }
 
+    function loaderHtml() {
+        return '<div class="no-data"><div class="loader"></div><p>Sincronizando con Firestore…</p></div>';
+    }
+
     function renderStudentList() {
+        if (!dataLoaded) {
+            studentListEl.innerHTML = '<div class="empty-state"><div class="loader" style="width:28px;height:28px;border-width:3px;margin-bottom:0"></div><p>Cargando…</p></div>';
+            return;
+        }
         if (!students.length) {
             studentListEl.innerHTML = '';
             studentListEl.appendChild(emptyState);
@@ -1677,7 +1861,7 @@
     }
 
     // ── Init ──
-    render();
+    bootstrap();
 })();
 </script>
 
