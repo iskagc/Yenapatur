@@ -1276,13 +1276,13 @@
     // En Firestore crea la colección "students".
     // =================================================================
     const firebaseConfig = {
-      apiKey: "AIzaSyCN2fhXJMAQZFCeTeSFOdEwd4fFRYgaBmo",
-      authDomain: "yenapatur-417e5.firebaseapp.com",
-      projectId: "yenapatur-417e5",
-      storageBucket: "yenapatur-417e5.firebasestorage.app",
-      messagingSenderId: "378599096126",
-      appId: "1:378599096126:web:e8d8a19525f64e81d1f66f",
-      measurementId: "G-MZCLBHGLB5"
+        apiKey: "AIzaSyCN2fhXJMAQZFCeTeSFOdEwd4fFRYgaBmo",
+        authDomain: "yenapatur-417e5.firebaseapp.com",
+        projectId: "yenapatur-417e5",
+        storageBucket: "yenapatur-417e5.firebasestorage.app",
+        messagingSenderId: "378599096126",
+        appId: "1:378599096126:web:e8d8a19525f64e81d1f66f",
+        measurementId: "G-MZCLBHGLB5"
     };
 
     const configEsPlaceholder =
@@ -1479,14 +1479,14 @@
         studentListEl.querySelectorAll('.student-card').forEach(card => {
             card.addEventListener('click', e => {
                 if (e.target.closest('.delete-btn')) return;
-                selectedStudentId = parseInt(card.dataset.id);
+                selectedStudentId = card.dataset.id;
                 render();
             });
         });
         studentListEl.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                removeStudent(parseInt(btn.dataset.del));
+                removeStudent(btn.dataset.del);
             });
         });
     }
