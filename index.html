@@ -1760,41 +1760,45 @@
                 } else {
                     duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
                 }
-            } else {
-                const doc = {
-                    name: name,
-                    country: country,
-                    color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
-                    schedule: {},
-                    owner: currentUser.uid,
-                    key: slug,
-                    createdAt: new Date()
-                };
-                DAY_KEYS.forEach(d => doc.schedule[d] = []);
-                ref.set(doc)
-                    .then(() => {
-                        guestDoc = {
-                            id: slug,
-                            name: name,
-                            country: country,
-                            color: doc.color,
-                            schedule: doc.schedule
-                        };
-                        pendingGuestName = '';
-                        setSync('synced');
-                        showToast('Bienvenido/a, ' + name);
-                        renderGuest();
-                    })
-                    .catch(err => {
-                        if (err && err.code === 'permission-denied') {
-                            duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
-                        } else {
-                            showToast('No se pudo guardar tu información: ' + friendlyError(err), true);
-                        }
-                    });
+                return;
             }
+            const doc = {
+                name: name,
+                country: country,
+                color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+                schedule: {},
+                owner: currentUser.uid,
+                key: slug,
+                createdAt: new Date()
+            };
+            DAY_KEYS.forEach(d => doc.schedule[d] = []);
+            ref.set(doc)
+                .then(() => {
+                    guestDoc = {
+                        id: slug,
+                        name: name,
+                        country: country,
+                        color: doc.color,
+                        schedule: doc.schedule
+                    };
+                    pendingGuestName = '';
+                    setSync('synced');
+                    showToast('Bienvenido/a, ' + name);
+                    renderGuest();
+                })
+                .catch(err => {
+                    if (err && err.code === 'permission-denied') {
+                        duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
+                    } else {
+                        showToast('No se pudo guardar tu información: ' + friendlyError(err), true);
+                    }
+                });
         }).catch(err => {
-            showToast('No se pudo ingresar: ' + friendlyError(err), true);
+            if (err && err.code === 'permission-denied') {
+                duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
+            } else {
+                showToast('No se pudo ingresar: ' + friendlyError(err), true);
+            }
         });
     }
 
