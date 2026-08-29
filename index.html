@@ -1087,6 +1087,19 @@
         .gate-panel input:focus { border-color: var(--terracotta); }
         .gate-panel input::placeholder { color: var(--text-3); }
 
+        .gate-panel select {
+            padding: 11px 13px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text-2);
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .gate-panel select:focus { border-color: var(--terracotta); }
+
         .gate-btn {
             padding: 12px;
             border-radius: 9px;
@@ -1138,6 +1151,17 @@
             color: var(--gold);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .guest-panel-header select {
+            background: var(--bg-4);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 0.78rem;
+            max-width: 150px;
+            cursor: pointer;
         }
 
         /* ── Responsive ── */
@@ -1264,6 +1288,7 @@
         <div class="gate-panel" id="gateVisit">
             <p class="gate-desc">Ingresa tu nombre y marca los bloques de tu horario. No necesitas cuenta: tus datos quedan protegidos.</p>
             <input type="text" id="guestNameInput" placeholder="Tu nombre..." maxlength="40">
+            <select id="guestCountrySelect"></select>
             <button class="gate-btn primary" id="guestEnterBtn">Entrar con mi horario</button>
             <span class="gate-error" id="guestError"></span>
         </div>
@@ -1375,7 +1400,7 @@
         { code: 'ae', name: 'Emiratos Árabes' },
         { code: 'sa', name: 'Arabia Saudita' },
         { code: 'qa', name: 'Catar' }
-    ];
+    ].sort((a, b) => a.name.localeCompare(b.name));
 
     // ── Estado ──
     let students = [];
@@ -1413,6 +1438,7 @@
     const gateAdminPanel = document.getElementById('gateAdmin');
     const gateVisitPanel = document.getElementById('gateVisit');
     const guestNameInput = document.getElementById('guestNameInput');
+    const guestCountrySelect = document.getElementById('guestCountrySelect');
     const guestEnterBtn = document.getElementById('guestEnterBtn');
     const guestError = document.getElementById('guestError');
     const adminEmailInput = document.getElementById('adminEmailInput');
@@ -1456,6 +1482,9 @@
         let html = '<option value="">&mdash; Seleccionar país &mdash;</option>';
         COUNTRIES.forEach(c => { html += '<option value="' + c.code + '">' + c.name + '</option>'; });
         studentCountrySelect.innerHTML = html;
+        let ghtml = '<option value="">&mdash; Tu país &mdash;</option>';
+        COUNTRIES.forEach(c => { ghtml += '<option value="' + c.code + '">' + c.name + '</option>'; });
+        guestCountrySelect.innerHTML = ghtml;
     })();
 
     // ── Firestore ──
@@ -1616,14 +1645,24 @@
                         schedule: sc
                     };
                     setSync('synced');
-                    if (pendingGuestName && pendingGuestName !== guestDoc.name) {
-                        const newName = pendingGuestName;
-                        pendingGuestName = '';
-                        db.collection('students').doc(uid).update({ name: newName })
-                            .then(() => { guestDoc.name = newName; renderGuest(); })
-                            .catch(() => { guestDoc.name = newName; renderGuest(); });
+                    const selectedC = guestCountrySelect.value;
+                    const upd = {};
+                    if (pendingGuestName && pendingGuestName !== guestDoc.name) upd.name = pendingGuestName;
+                    if (selectedC !== '' && selectedC !== guestDoc.country) upd.country = selectedC;
+                    pendingGuestName = '';
+                    if (Object.keys(upd).length) {
+                        db.collection('students').doc(uid).update(upd)
+                            .then(() => {
+                                if (upd.name) guestDoc.name = upd.name;
+                                if (upd.country) guestDoc.country = upd.country;
+                                renderGuest();
+                            })
+                            .catch(() => {
+                                if (upd.name) guestDoc.name = upd.name;
+                                if (upd.country) guestDoc.country = upd.country;
+                                renderGuest();
+                            });
                     } else {
-                        pendingGuestName = '';
                         renderGuest();
                     }
                 } else if (pendingGuestName) {
@@ -1642,7 +1681,7 @@
     function createGuest(uid, name) {
         const doc = {
             name: name,
-            country: '',
+            country: guestCountrySelect.value || '',
             color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
             schedule: {},
             owner: uid,
@@ -1686,11 +1725,17 @@
             scheduleContent.innerHTML = loaderHtml();
             return;
         }
+        let copts = '<option value="">&mdash; Tu país &mdash;</option>';
+        COUNTRIES.forEach(c => {
+            const selC = c.code === guestDoc.country ? ' selected' : '';
+            copts += '<option value="' + c.code + '"' + selC + '>' + c.name + '</option>';
+        });
         let html = '<div class="schedule-wrapper">'
             + '<div class="guest-panel-header">'
             + '<span class="tag">Visitante</span>'
             + '<span class="color-dot" style="background:' + guestDoc.color + '"></span>'
             + '<strong>' + escHtml(guestDoc.name) + '</strong>'
+            + '<select data-guest-country="1">' + copts + '</select>'
             + '<span class="hint">Clic en una celda = asignar / quitar bloque</span>'
             + '</div>'
             + '<div class="schedule-grid">';
@@ -1713,6 +1758,21 @@
         scheduleContent.querySelectorAll('.block-cell').forEach(cell => {
             cell.addEventListener('click', () => toggleGuestBlock(cell.dataset.day, cell.dataset.block));
         });
+        const gcSel = scheduleContent.querySelector('[data-guest-country]');
+        if (gcSel) gcSel.addEventListener('change', () => setGuestCountry(gcSel.value));
+    }
+
+    function setGuestCountry(code) {
+        if (!guestDoc) return;
+        db.collection('students').doc(guestUid).update({ country: code })
+            .then(() => {
+                guestDoc.country = code;
+                showToast('País actualizado');
+                renderGuest();
+            })
+            .catch(err => {
+                showToast('No se pudo actualizar el país: ' + friendlyError(err), true);
+            });
     }
 
     // ── Gestión de estudiantes (escrituras en Firestore) ──
@@ -1791,6 +1851,7 @@
         if (code === 'auth/too-many-requests') return 'Demasiados intentos. Intenta más tarde.';
         if (code === 'auth/network-request-failed') return 'Sin conexión. Revisa tu red.';
         if (code === 'auth/operation-not-allowed') return 'El acceso con correo no está habilitado en Firebase.';
+        if (code === 'auth/admin-restricted-operation') return 'El proveedor no está habilitado en Firebase. Actívalo en Authentication → Sign-in method (pestaña Anónimo).';
         if (code === 'auth/email-already-in-use') return 'Ese correo ya está en uso.';
         if (code === 'auth/configuration-not-found') return 'Firebase Authentication no está habilitado en el proyecto. Actívalo en Firebase Console → Authentication → Empezar.';
         if (code === 'auth/invalid-api-key') return 'La API key del proyecto es inválida.';
