@@ -685,6 +685,18 @@
 
         .rank-meta b { color: var(--text-2); }
 
+        .rank-type {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 6px;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border-radius: 6px;
+            background: var(--bg-3);
+            border: 1px solid var(--border-light);
+        }
+
         .rank-toggle {
             margin-top: 10px;
             padding: 8px 16px;
@@ -1142,6 +1154,39 @@
         .gate-btn.primary { background: var(--terracotta); color: #2a180c; }
         .gate-btn.primary:hover { background: var(--gold); }
 
+        .gate-btn.google-btn {
+            background: #fff;
+            border: 1px solid #dfe1e5;
+            color: #3c4043;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .gate-btn.google-btn:hover { background: #f6f7f9; }
+        .gate-btn.google-btn:disabled { opacity: 0.6; cursor: wait; }
+
+        .gate-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-3);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin: 4px 0;
+        }
+
+        .gate-divider::before,
+        .gate-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-light);
+        }
+
         .gate-error { font-size: 0.78rem; color: #e58a6e; min-height: 1.1em; text-align: center; }
 
         .signout-btn {
@@ -1230,6 +1275,22 @@
             line-height: 1.5;
             margin-bottom: 18px;
         }
+
+        .profile-box input,
+        .profile-box select {
+            width: 100%;
+            background: var(--bg-4);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 11px 12px;
+            font-size: 0.92rem;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .profile-box input:focus,
+        .profile-box select:focus { border-color: var(--terracotta); outline: none; }
 
         .confirm-actions {
             display: flex;
@@ -1350,6 +1411,47 @@
         .range-item .range-del:hover { color: #ff5a3c; }
         .range-empty { font-size: 0.8rem; color: var(--text-3); padding: 6px 2px; }
 
+        .type-badge {
+            display: inline-block;
+            font-size: 0.56rem;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            padding: 1.5px 5px;
+            border-radius: 5px;
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+
+        .type-badge.int { background: rgba(217,164,65,0.16); color: var(--gold); border: 1px solid rgba(217,164,65,0.35); }
+        .type-badge.vol { background: rgba(136,165,90,0.16); color: var(--olive); border: 1px solid rgba(136,165,90,0.35); }
+
+        .compare-type {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 12px 2px 2px;
+            font-size: 0.85rem;
+        }
+
+        .compare-type .ct-label { color: var(--text-2); font-weight: 600; }
+
+        .compare-type .ct-chip {
+            border: 1px solid var(--border-light);
+            background: var(--bg-3);
+            color: var(--text-2);
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .compare-type .ct-chip:hover { border-color: var(--terracotta); color: var(--terracotta); }
+        .compare-type .ct-chip.active { background: var(--terracotta); color: #2a180c; border-color: var(--terracotta); font-weight: 800; }
+        .compare-type .ct-note { font-size: 0.72rem; color: var(--text-3); }
+
         .week-ref {
             display: flex;
             align-items: center;
@@ -1441,6 +1543,7 @@
                     <button class="add-btn" id="addStudentBtn" title="Agregar estudiante">+</button>
                 </div>
                 <select id="studentCountrySelect"></select>
+                <select id="studentTypeSelect"></select>
             </div>
         </div>
         <div class="student-list" id="studentList">
@@ -1484,9 +1587,12 @@
             <button class="gate-tab" data-gate="admin">Administrador</button>
         </div>
         <div class="gate-panel" id="gateVisit">
-            <p class="gate-desc">Crea una cuenta gratuita con tu correo para registrar tu horario y poder volver a editarlo cuando quieras, desde cualquier dispositivo.</p>
+            <p class="gate-desc">Registra tu horario y vuélvelo a editar cuando quieras, desde cualquier dispositivo.</p>
+            <button class="gate-btn google-btn" id="guestGoogleBtn">Continuar con Google</button>
+            <div class="gate-divider"><span>o con tu correo</span></div>
             <input type="text" id="guestNameInput" placeholder="Tu nombre..." maxlength="40">
             <select id="guestCountrySelect"></select>
+            <select id="guestTypeSelect"></select>
             <input type="email" id="guestEmailInput" placeholder="Correo electrónico" autocomplete="username">
             <input type="password" id="guestPassInput" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password">
             <button class="gate-btn primary" id="guestRegisterBtn">Crear cuenta y entrar</button>
@@ -1511,6 +1617,21 @@
             <button class="confirm-cancel" id="confirmCancel">Cancelar</button>
             <button class="confirm-ok" id="confirmOk">Confirmar</button>
         </div>
+    </div>
+</div>
+
+<div class="confirm-modal" id="profileModal">
+    <div class="confirm-box profile-box">
+        <h4>Completa tu perfil</h4>
+        <p>Para registrar tu horario falta tu nombre, tu país y tu tipo de participación.</p>
+        <input type="text" id="profileNameInput" placeholder="Tu nombre..." maxlength="40">
+        <select id="profileCountrySelect"></select>
+        <select id="profileTypeSelect"></select>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" id="profileCancel">Cancelar</button>
+            <button class="confirm-ok" id="profileOk">Guardar y ver mi horario</button>
+        </div>
+        <span class="gate-error" id="profileError"></span>
     </div>
 </div>
 
@@ -1643,14 +1764,20 @@
     let guestUid = null;
     let guestDoc = null;
     let pendingGuestName = '';
+    let pendingGuestCountry = '';
+    let pendingGuestTipo = 'intercambio';
+    let pendingProvider = false;
+    let googleProvider = null;
     let weekRef = null;
     let globalVacations = [];
     let globVacUnsub = null;
+    let compareType = null;
     const ADMIN_EMAIL = 'yenapatur@gmail.com';
 
     // ── DOM ──
     const studentNameInput = document.getElementById('studentNameInput');
     const studentCountrySelect = document.getElementById('studentCountrySelect');
+    const studentTypeSelect = document.getElementById('studentTypeSelect');
     const addStudentBtn = document.getElementById('addStudentBtn');
     const studentListEl = document.getElementById('studentList');
     const emptyState = document.getElementById('emptyState');
@@ -1667,11 +1794,20 @@
     const gateVisitPanel = document.getElementById('gateVisit');
     const guestNameInput = document.getElementById('guestNameInput');
     const guestCountrySelect = document.getElementById('guestCountrySelect');
+    const guestTypeSelect = document.getElementById('guestTypeSelect');
     const guestEmailInput = document.getElementById('guestEmailInput');
     const guestPassInput = document.getElementById('guestPassInput');
     const guestRegisterBtn = document.getElementById('guestRegisterBtn');
     const guestLoginBtn = document.getElementById('guestLoginBtn');
+    const guestGoogleBtn = document.getElementById('guestGoogleBtn');
     const guestError = document.getElementById('guestError');
+    const profileModal = document.getElementById('profileModal');
+    const profileNameInput = document.getElementById('profileNameInput');
+    const profileCountrySelect = document.getElementById('profileCountrySelect');
+    const profileTypeSelect = document.getElementById('profileTypeSelect');
+    const profileOkBtn = document.getElementById('profileOk');
+    const profileCancelBtn = document.getElementById('profileCancel');
+    const profileError = document.getElementById('profileError');
     const adminEmailInput = document.getElementById('adminEmailInput');
     const adminPassInput = document.getElementById('adminPassInput');
     const adminLoginBtn = document.getElementById('adminLoginBtn');
@@ -1712,7 +1848,7 @@
         setTimeout(() => t.remove(), 2500);
     }
 
-    // Poblar selector de países
+    // Poblar selectores de países
     (function buildCountrySelect() {
         let html = '<option value="">&mdash; Seleccionar país &mdash;</option>';
         COUNTRIES.forEach(c => { html += '<option value="' + c.code + '">' + c.name + '</option>'; });
@@ -1720,7 +1856,22 @@
         let ghtml = '<option value="">&mdash; Tu país &mdash;</option>';
         COUNTRIES.forEach(c => { ghtml += '<option value="' + c.code + '">' + c.name + '</option>'; });
         guestCountrySelect.innerHTML = ghtml;
+        const typeOpts = '<option value="">&mdash; ¿Cómo participarás? &mdash;</option>'
+            + '<option value="intercambio">Estudiante de intercambio</option>'
+            + '<option value="voluntario">Voluntario/a</option>';
+        studentTypeSelect.innerHTML = typeOpts;
+        guestTypeSelect.innerHTML = typeOpts;
+        profileCountrySelect.innerHTML = ghtml;
+        profileTypeSelect.innerHTML = typeOpts;
     })();
+
+    // ── Tipo de participación ──
+    function tipoLabel(t) { return t === 'voluntario' ? 'Voluntario/a' : 'Estudiante de intercambio'; }
+    function tipoShort(t) { return t === 'voluntario' ? 'Vol' : 'Int'; }
+    function tipoClass(t) { return t === 'voluntario' ? 'vol' : 'int'; }
+    function typeBadgeHtml(t) {
+        return '<span class="type-badge ' + tipoClass(t) + '" title="' + escHtml(tipoLabel(t)) + '">' + tipoShort(t) + '</span>';
+    }
 
     // ── Firestore ──
     // =================================================================
@@ -1782,6 +1933,7 @@
                         name: d.name || '',
                         country: d.country || '',
                         color: d.color || '#c96f43',
+                        tipo: d.tipo === 'voluntario' ? 'voluntario' : 'intercambio',
                         schedule: d.schedule || {},
                         trips: d.trips || [],
                         vacations: [],
@@ -1823,6 +1975,7 @@
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         auth = firebase.auth();
+        googleProvider = new firebase.auth.GoogleAuthProvider();
         db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
         auth.onAuthStateChanged(onAuthChanged);
         setSync('connecting');
@@ -1847,6 +2000,9 @@
             guestDoc = null;
             guestUid = null;
             pendingGuestName = '';
+            pendingGuestCountry = '';
+            pendingGuestTipo = 'intercambio';
+            pendingProvider = false;
             if (unsubscribe) { unsubscribe(); unsubscribe = null; }
             if (globVacUnsub) { globVacUnsub(); globVacUnsub = null; }
             document.body.classList.remove('guest-mode');
@@ -1874,10 +2030,14 @@
         guestUid = uid;
         db.collection('students').where('owner', '==', uid).limit(1).get()
             .then(qs => {
+                const wasProvider = pendingProvider;
+                pendingProvider = false;
                 if (!qs.empty) {
                     hydrateGuest(qs.docs[0].id, qs.docs[0].data());
                 } else if (pendingGuestName) {
-                    registerGuest(pendingGuestName, guestCountrySelect.value || '');
+                    registerGuest(pendingGuestName, pendingGuestCountry || guestCountrySelect.value || '', pendingGuestTipo || guestTypeSelect.value || 'intercambio');
+                } else if (wasProvider) {
+                    showProfileModal();
                 } else {
                     showToast('Escribe tu nombre para ingresar', true);
                     auth.signOut();
@@ -1889,6 +2049,19 @@
             });
     }
 
+    function showProfileModal() {
+        profileError.textContent = '';
+        profileNameInput.value = '';
+        profileCountrySelect.value = '';
+        profileTypeSelect.value = '';
+        profileModal.classList.add('visible');
+        setTimeout(() => profileNameInput.focus(), 60);
+    }
+
+    function hideProfileModal() {
+        profileModal.classList.remove('visible');
+    }
+
     function hydrateGuest(id, d) {
         const sc = d.schedule || {};
         DAY_KEYS.forEach(dk => { if (!sc[dk]) sc[dk] = []; });
@@ -1897,6 +2070,7 @@
             name: d.name || '',
             country: d.country || '',
             color: d.color || '#c96f43',
+            tipo: d.tipo === 'voluntario' ? 'voluntario' : 'intercambio',
             schedule: sc,
             trips: d.trips || []
         };
@@ -1905,7 +2079,7 @@
         renderGuest();
     }
 
-    function registerGuest(name, country) {
+    function registerGuest(name, country, tipo) {
         const slug = makeSlug(name, country);
         const ref = db.collection('students').doc(slug);
         ref.get().then(docSnap => {
@@ -1935,6 +2109,7 @@
                 name: name,
                 country: country,
                 color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+                tipo: tipo || 'intercambio',
                 schedule: {},
                 trips: [],
                 owner: currentUser.uid,
@@ -1950,6 +2125,7 @@
                         name: name,
                         country: country,
                         color: doc.color,
+                        tipo: doc.tipo,
                         schedule: doc.schedule,
                         trips: []
                     };
@@ -1997,7 +2173,7 @@
     function renderGuest() {
         const nb = guestDoc ? countBlocks(guestDoc) : 0;
         headerCount.textContent = guestDoc
-            ? (guestDoc.name + ' · ' + nb + ' bloque' + (nb === 1 ? '' : 's'))
+            ? (guestDoc.name + ' · ' + tipoLabel(guestDoc.tipo) + ' · ' + nb + ' bloque' + (nb === 1 ? '' : 's'))
             : '';
         if (!guestDoc) {
             scheduleContent.innerHTML = loaderHtml();
@@ -2008,12 +2184,17 @@
             const selC = c.code === guestDoc.country ? ' selected' : '';
             copts += '<option value="' + c.code + '"' + selC + '>' + c.name + '</option>';
         });
+        let topts = '<option value="intercambio">Estudiante de intercambio</option>'
+            + '<option value="voluntario">Voluntario/a</option>';
+        topts = topts.replace('<option value="intercambio">', '<option value="intercambio"' + (guestDoc.tipo === 'intercambio' ? ' selected' : '') + '>');
+        topts = topts.replace('<option value="voluntario">', '<option value="voluntario"' + (guestDoc.tipo === 'voluntario' ? ' selected' : '') + '>');
         let html = '<div class="schedule-wrapper">'
             + '<div class="guest-panel-header">'
             + '<span class="tag">Visitante</span>'
             + '<span class="color-dot" style="background:' + guestDoc.color + '"></span>'
             + '<strong>' + escHtml(guestDoc.name) + '</strong>'
             + '<select data-guest-country="1">' + copts + '</select>'
+            + '<select data-guest-type="1">' + topts + '</select>'
             + '<span class="hint">Clic en una celda = asignar / quitar bloque</span>'
             + '</div>'
             + '<div class="schedule-grid">';
@@ -2043,6 +2224,21 @@ html += '</div>'
         wireGuestRanges(scheduleContent);
         const gcSel = scheduleContent.querySelector('[data-guest-country]');
         if (gcSel) gcSel.addEventListener('change', () => setGuestCountry(gcSel.value));
+        const gtSel = scheduleContent.querySelector('[data-guest-type]');
+        if (gtSel) gtSel.addEventListener('change', () => setGuestType(gtSel.value));
+    }
+
+    function setGuestType(tipo) {
+        if (!guestDoc) return;
+        db.collection('students').doc(guestDoc.id).update({ tipo: tipo })
+            .then(() => {
+                guestDoc.tipo = tipo;
+                showToast('Participación actualizada');
+                renderGuest();
+            })
+            .catch(err => {
+                showToast('No se pudo actualizar la participación: ' + friendlyError(err), true);
+            });
     }
 
     function setGuestCountry(code) {
@@ -2181,7 +2377,7 @@ html += '</div>'
         return fmtDateShort(r.start) + ' – ' + fmtDateShort(r.end);
     }
 
-    function addStudent(name, country) {
+    function addStudent(name, country, tipo) {
         name = (name || '').trim();
         if (!name) { showToast('Escribe un nombre', true); return; }
         const slug = makeSlug(name, country || '');
@@ -2196,6 +2392,7 @@ html += '</div>'
                 name: name,
                 country: country || '',
                 color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+                tipo: tipo || 'intercambio',
                 schedule: {},
                 trips: [],
                 key: slug,
@@ -2208,6 +2405,7 @@ html += '</div>'
             selectedStudentId = slug;
             studentNameInput.value = '';
             studentCountrySelect.value = '';
+            studentTypeSelect.value = '';
             const c = getCountry(country);
             showToast(name + ' agregado' + (c ? ' (' + c.name + ')' : ''));
         }).catch(err => {
@@ -2239,6 +2437,12 @@ html += '</div>'
     function setStudentCountry(id, code) {
         db.collection('students').doc(id).update({ country: code }).catch(err => {
             showToast('No se pudo actualizar el país: ' + friendlyError(err), true);
+        });
+    }
+
+    function setStudentType(id, tipo) {
+        db.collection('students').doc(id).update({ tipo: tipo }).catch(err => {
+            showToast('No se pudo actualizar la participación: ' + friendlyError(err), true);
         });
     }
 
@@ -2365,8 +2569,8 @@ html += '</div>'
         });
     });
 
-    addStudentBtn.addEventListener('click', () => addStudent(studentNameInput.value, studentCountrySelect.value));
-    studentNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(studentNameInput.value, studentCountrySelect.value); });
+    addStudentBtn.addEventListener('click', () => addStudent(studentNameInput.value, studentCountrySelect.value, studentTypeSelect.value));
+    studentNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(studentNameInput.value, studentCountrySelect.value, studentTypeSelect.value); });
 
     // ── Puerta de acceso (login / visitante) ──
     function authErrorMessage(err) {
@@ -2405,7 +2609,10 @@ html += '</div>'
         if (!name) { guestError.textContent = 'Escribe tu nombre.'; return; }
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { guestError.textContent = 'Ingresa un correo válido.'; return; }
         if (pass.length < 6) { guestError.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+        if (!guestTypeSelect.value) { guestError.textContent = 'Selecciona si eres estudiante de intercambio o voluntario/a.'; return; }
         pendingGuestName = name;
+        pendingGuestCountry = guestCountrySelect.value || '';
+        pendingGuestTipo = guestTypeSelect.value;
         auth.createUserWithEmailAndPassword(email, pass).catch(err => {
             pendingGuestName = '';
             guestError.textContent = authErrorMessage(err);
@@ -2420,11 +2627,53 @@ html += '</div>'
         if (!name) { guestError.textContent = 'Escribe tu nombre.'; return; }
         if (!email || !pass) { guestError.textContent = 'Ingresa correo y contraseña.'; return; }
         pendingGuestName = name;
+        pendingGuestCountry = guestCountrySelect.value || '';
+        pendingGuestTipo = guestTypeSelect.value || 'intercambio';
         auth.signInWithEmailAndPassword(email, pass).catch(err => {
             pendingGuestName = '';
             guestError.textContent = authErrorMessage(err);
         });
     });
+
+    guestGoogleBtn.addEventListener('click', () => {
+        guestError.textContent = '';
+        const name = guestNameInput.value.trim();
+        const country = guestCountrySelect.value || '';
+        const tipo = guestTypeSelect.value || '';
+        if (name && country && tipo) {
+            pendingGuestName = name;
+            pendingGuestCountry = country;
+            pendingGuestTipo = tipo;
+        } else {
+            pendingGuestName = '';
+        }
+        pendingProvider = true;
+        auth.signInWithPopup(googleProvider).catch(err => {
+            pendingProvider = false;
+            guestError.textContent = authErrorMessage(err);
+        });
+    });
+
+    profileOkBtn.addEventListener('click', () => {
+        profileError.textContent = '';
+        const name = profileNameInput.value.trim();
+        if (!name) { profileError.textContent = 'Escribe tu nombre.'; return; }
+        if (!profileCountrySelect.value) { profileError.textContent = 'Selecciona tu país.'; return; }
+        if (!profileTypeSelect.value) { profileError.textContent = 'Selecciona si eres estudiante de intercambio o voluntario/a.'; return; }
+        pendingGuestName = name;
+        pendingGuestCountry = profileCountrySelect.value;
+        pendingGuestTipo = profileTypeSelect.value;
+        hideProfileModal();
+        registerGuest(pendingGuestName, pendingGuestCountry, pendingGuestTipo);
+    });
+
+    profileCancelBtn.addEventListener('click', () => {
+        hideProfileModal();
+        auth.signOut();
+    });
+    profileModal.addEventListener('click', e => { if (e.target === profileModal) { hideProfileModal(); auth.signOut(); } });
+    profileNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') profileOkBtn.click(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && profileModal.classList.contains('visible')) { hideProfileModal(); auth.signOut(); } });
     guestNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') guestRegisterBtn.click(); });
     guestPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') guestRegisterBtn.click(); });
 
@@ -2531,6 +2780,7 @@ html += '</div>'
                 + '<span class="color-dot" style="background:' + s.color + '"></span>'
                 + flagImg(s.country)
                 + '<span class="student-name">' + escHtml(s.name) + '</span>'
+                + typeBadgeHtml(s.tipo)
                 + '<span class="student-blocks">' + bc + '</span>'
                 + '<button class="delete-btn" data-del="' + s.id + '" title="Eliminar">&times;</button>'
                 + '</div>';
@@ -2573,6 +2823,8 @@ html += '</div>'
             const sel = c.code === s.country ? ' selected' : '';
             countryOpts += '<option value="' + c.code + '"' + sel + '>' + c.name + '</option>';
         });
+        const tipoOpts = ('<option value="intercambio"' + (s.tipo === 'intercambio' ? ' selected' : '') + '>Estudiante de intercambio</option>'
+            + '<option value="voluntario"' + (s.tipo === 'voluntario' ? ' selected' : '') + '>Voluntario/a</option>');
 
         let html = '<div class="schedule-wrapper">'
             + globalVacsHtml()
@@ -2582,6 +2834,7 @@ html += '</div>'
             + flagImg(s.country, 40)
             + escHtml(s.name)
             + '<select data-country="' + s.id + '">' + countryOpts + '</select>'
+            + '<select data-tipo="' + s.id + '">' + tipoOpts + '</select>'
             + '</div>'
             + '<span class="hint">Clic en una celda = asignar / quitar bloque</span>'
             + '</div>'
@@ -2638,17 +2891,30 @@ html += '</div>'
                 );
             });
         }
+        const tipoSel = scheduleContent.querySelector('[data-tipo]');
+        if (tipoSel) {
+            tipoSel.addEventListener('change', () => {
+                const newTipo = tipoSel.value;
+                if (newTipo === s.tipo) return;
+                askConfirm(
+                    '¿Cambiar a "' + s.name + '" como ' + tipoLabel(newTipo) + '?',
+                    () => setStudentType(tipoSel.dataset.tipo, newTipo),
+                    { onCancel: () => render() }
+                );
+            });
+        }
     }
 
     // ── Comparación ──
-    function buildAvailability(week) {
+    function buildAvailability(week, tipo) {
         const dates = week || null;
+        const pool = tipo ? students.filter(s => s.tipo === tipo) : students;
         const avail = {};
         DAY_KEYS.forEach((dk, di) => {
             avail[dk] = { dayIdx: di };
             BLOCKS.forEach(b => {
                 const free = [], occ = [];
-                students.forEach(s => {
+                pool.forEach(s => {
                     let isFree;
                     if (dates) {
                         const iso = dates[di];
@@ -2661,7 +2927,7 @@ html += '</div>'
                     }
                     (isFree ? free : occ).push(s);
                 });
-                const pct = students.length ? Math.round((free.length / students.length) * 100) : 0;
+                const pct = pool.length ? Math.round((free.length / pool.length) * 100) : 0;
                 avail[dk][b] = { free: free, occ: occ, pct: pct, n: free.length };
             });
         });
@@ -2685,7 +2951,10 @@ html += '</div>'
         }
 
         const dates = weekDates();
-        const avail = buildAvailability(dates);
+        const pool = compareType ? students.filter(s => s.tipo === compareType) : students;
+        const avail = buildAvailability(dates, compareType);
+        const nInt = students.filter(s => s.tipo === 'intercambio').length;
+        const nVol = students.length - nInt;
         const totalCells = BLOCKS.length * DAY_KEYS.length;
         let cells100 = 0;
         let totalFree = 0;
@@ -2701,12 +2970,21 @@ html += '</div>'
         let html = '<div class="schedule-wrapper">'
             + '<div class="comparison-header">'
             + '<h3>Comparación de disponibilidad conjunta</h3>'
-            + '<p>' + students.length + ' estudiantes comparados &middot; incluye vacaciones y viajes/planes de la semana de referencia &middot; haz clic en un bloque para ver quién está ocupado o libre</p>'
+            + '<p>' + students.length + ' participantes en total &middot; ' + nInt + ' intercambio &middot; ' + nVol + ' voluntarios &middot; incluye vacaciones y viajes/planes de la semana de referencia &middot; haz clic en un bloque para ver quién está ocupado o libre</p>'
             + '</div>'
             + '<div class="comparison-summary">'
             + '<div class="mini-stat"><div class="v">' + cells100 + '</div><div class="l">bloques 100% libres</div></div>'
             + '<div class="mini-stat"><div class="v">' + avg + '%</div><div class="l">disponibilidad media</div></div>'
-            + '<div class="mini-stat"><div class="v">' + students.length + '</div><div class="l">estudiantes</div></div>'
+            + '<div class="mini-stat"><div class="v">' + pool.length + '</div><div class="l">' + (compareType ? (compareType === 'intercambio' ? 'intercambio' : 'voluntarios') + ' comparados' : 'participantes') + '</div></div>'
+            + '</div>'
+            + '<div class="compare-type">'
+            + '<span class="ct-label">Prioridad:</span>'
+            + '<button class="ct-chip' + (!compareType ? ' active' : '') + '" data-compare-type="all">Todos</button>'
+            + '<button class="ct-chip' + (compareType === 'intercambio' ? ' active' : '') + '" data-compare-type="intercambio">Intercambio</button>'
+            + '<button class="ct-chip' + (compareType === 'voluntario' ? ' active' : '') + '" data-compare-type="voluntario">Voluntarios</button>'
+            + '<span class="ct-note">' + (compareType
+                ? 'mostrando solo ' + (compareType === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios') + ' · se consideran todos/as en la vista "Todos"'
+                : 'los porcentajes incluyen a todos/as') + '</span>'
             + '</div>'
             + '<div class="week-ref">'
             + '<label for="weekRefInput">Semana de referencia:</label>'
@@ -2764,12 +3042,16 @@ html += '</div>'
             if (!rankShowAll && it.pct < 75) return;
             const isSel = compareSel && compareSel.dayKey === it.dk && compareSel.block === it.block ? ' active' : '';
             const fillColor = it.pct === 100 ? '#88a55a' : it.pct >= 50 ? '#c08552' : '#a85138';
+            const cellAv = avail[it.dk][it.block];
+            const nIntF = cellAv.free.filter(s => s.tipo === 'intercambio').length;
+            const nVolF = cellAv.free.length - nIntF;
             html += '<div class="rank-row' + isSel + '" data-day="' + it.dk + '" data-block="' + it.block + '">'
                 + '<span class="rank-pos">' + (idx + 1) + '</span>'
                 + '<span class="rank-block">' + it.block + '</span>'
                 + '<span class="rank-day">' + DAYS[it.dayIdx] + '</span>'
                 + '<span class="rank-fill"><span class="inner" style="width:' + it.pct + '%;background:' + fillColor + '"></span></span>'
-                + '<span class="rank-meta"><b>' + it.pct + '%</b> &middot; ' + it.n + ' libres</span>'
+                + '<span class="rank-meta"><b>' + it.pct + '%</b> &middot; ' + it.n + ' libres'
+                + '<span class="rank-type">' + nIntF + ' int &middot; ' + nVolF + ' vol</span></span>'
                 + '</div>';
         });
         html += '</div>';
@@ -2811,6 +3093,15 @@ html += '</div>'
             detailFilter = '';
             renderCompare();
         });
+        compareContent.querySelectorAll('[data-compare-type]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                compareType = btn.dataset.compareType === 'all' ? null : btn.dataset.compareType;
+                compareSel = null;
+                rankShowAll = false;
+                detailFilter = '';
+                renderCompare();
+            });
+        });
         const rt = document.getElementById('rankToggle');
         if (rt) rt.addEventListener('click', () => { rankShowAll = !rankShowAll; renderCompare(); });
         const dc = document.getElementById('detailClose');
@@ -2846,7 +3137,7 @@ html += '</div>'
             const c = getCountry(s.country);
             const cntry = c ? ' &middot; ' + c.name : '';
             html += '<span class="chip ' + cls + '">' + flagImg(s.country, 20)
-                + s.name + '</span>';
+                + s.name + typeBadgeHtml(s.tipo) + '</span>';
         });
         return html;
     }
@@ -2856,7 +3147,7 @@ html += '</div>'
         const chipsF = document.getElementById('chipsFree');
         const chipsB = document.getElementById('chipsBusy');
         if (!panel || !chipsF || !chipsB) return;
-        const a = buildAvailability(weekDates());
+        const a = buildAvailability(weekDates(), compareType);
         const cell = a[compareSel.dayKey][compareSel.block];
         const q = detailFilter.toLowerCase();
         chipsF.innerHTML = chipsHtml(cell.free.filter(s => filterMatch(s, q)), 'chip-free');
@@ -2886,6 +3177,8 @@ html += '</div>'
             totalAssigned += countBlocks(s);
             if (s.country) countryCount[s.country] = (countryCount[s.country] || 0) + 1;
         });
+        const nInt = students.filter(s => s.tipo === 'intercambio').length;
+        const nVol = students.length - nInt;
 
         const avail = buildAvailability();
         let cells100 = 0;
@@ -2908,7 +3201,34 @@ html += '</div>'
             + '<div class="stat-detail">de ' + totalSlots + ' bloques posibles</div></div>'
             + '<div class="stat-card"><div class="stat-label">Carga total asignada</div><div class="stat-value">' + totalAssigned + '</div>'
             + '<div class="stat-detail">bloques ocupados en total</div></div>'
+            + '<div class="stat-card"><div class="stat-label">Intercambio</div><div class="stat-value" style="color:var(--gold)">' + nInt + '</div>'
+            + '<div class="stat-detail">estudiantes de intercambio</div></div>'
+            + '<div class="stat-card"><div class="stat-label">Voluntarios</div><div class="stat-value" style="color:var(--olive)">' + nVol + '</div>'
+            + '<div class="stat-detail">participantes voluntarios</div></div>'
             + '</div>';
+
+        // Intercambio vs Voluntarios
+        html += '<div class="panel-section">';
+        html += '<div class="section-title">Intercambio vs Voluntarios <span style="font-weight:500;color:var(--text-3);font-size:0.85rem">prioridad para horarios de intercambio</span></div>';
+        ['intercambio', 'voluntario'].forEach(ti => {
+            const members = students.filter(s => s.tipo === ti);
+            const av = buildAvailability(null, ti);
+            let cells100 = 0;
+            DAY_KEYS.forEach(dk => BLOCKS.forEach(b => { if (av[dk][b].pct === 100) cells100++; }));
+            const totalB = members.reduce((a, s) => a + countBlocks(s), 0);
+            const avgPct = members.length ? Math.round((totalB / (members.length * totalSlots)) * 100) : 0;
+            const colspan = DAY_KEYS.length * BLOCKS.length;
+            const freePct = members.length ? Math.round((cells100 / colspan) * 100) : 0;
+            const barColor = ti === 'intercambio' ? 'var(--gold)' : 'var(--olive)';
+            html += '<div class="student-stat-row">'
+                + '<span class="color-dot" style="background:' + barColor + '"></span>'
+                + '<span class="name">' + tipoLabel(ti) + '</span>'
+                + '<span class="blocks-info">' + members.length + ' persona' + (members.length === 1 ? '' : 's')
+                + ' &middot; ' + avgPct + '% horario ocupado &middot; ' + freePct + '% de bloques 100% libres</span>'
+                + '<div class="bar-container"><div class="bar-fill" style="width:' + avgPct + '%;background:' + barColor + '"></div></div>'
+                + '</div>';
+        });
+        html += '</div>';
 
         // Carga por estudiante
         html += '<div class="panel-section">';
@@ -2921,6 +3241,7 @@ html += '</div>'
                 + '<span class="color-dot" style="background:' + s.color + '"></span>'
                 + flagImg(s.country, 20)
                 + '<span class="name">' + escHtml(s.name) + '</span>'
+                + typeBadgeHtml(s.tipo)
                 + '<span class="blocks-info">' + bc + ' bloques (' + pct + '%)</span>'
                 + '<div class="bar-container"><div class="bar-fill" style="width:' + pct + '%;background:' + s.color + '"></div></div>'
                 + '</div>';
