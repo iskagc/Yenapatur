@@ -2956,6 +2956,11 @@ html += '</div>'
         const nInt = students.filter(s => s.tipo === 'intercambio').length;
         const nVol = students.length - nInt;
         const totalCells = BLOCKS.length * DAY_KEYS.length;
+        const noteTxt = compareType
+            ? (pool.length
+                ? 'mostrando solo ' + (compareType === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios') + ' &middot; se consideran todos/as en la vista "Todos"'
+                : 'todavía no hay ' + (compareType === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios') + ' &middot; vuelve a "Todos"')
+            : 'los porcentajes incluyen a todos/as';
         let cells100 = 0;
         let totalFree = 0;
         DAY_KEYS.forEach(dk => {
@@ -2982,9 +2987,7 @@ html += '</div>'
             + '<button class="ct-chip' + (!compareType ? ' active' : '') + '" data-compare-type="all">Todos</button>'
             + '<button class="ct-chip' + (compareType === 'intercambio' ? ' active' : '') + '" data-compare-type="intercambio">Intercambio</button>'
             + '<button class="ct-chip' + (compareType === 'voluntario' ? ' active' : '') + '" data-compare-type="voluntario">Voluntarios</button>'
-            + '<span class="ct-note">' + (compareType
-                ? 'mostrando solo ' + (compareType === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios') + ' · se consideran todos/as en la vista "Todos"'
-                : 'los porcentajes incluyen a todos/as') + '</span>'
+            + '<span class="ct-note">' + noteTxt + '</span>'
             + '</div>'
             + '<div class="week-ref">'
             + '<label for="weekRefInput">Semana de referencia:</label>'
@@ -3051,7 +3054,9 @@ html += '</div>'
                 + '<span class="rank-day">' + DAYS[it.dayIdx] + '</span>'
                 + '<span class="rank-fill"><span class="inner" style="width:' + it.pct + '%;background:' + fillColor + '"></span></span>'
                 + '<span class="rank-meta"><b>' + it.pct + '%</b> &middot; ' + it.n + ' libres'
-                + '<span class="rank-type">' + nIntF + ' int &middot; ' + nVolF + ' vol</span></span>'
+                + '<span class="rank-type">' + (compareType
+                    ? (compareType === 'intercambio' ? nIntF + ' int' : nVolF + ' vol') + ' del pool'
+                    : nIntF + ' int &middot; ' + nVolF + ' vol') + '</span></span>'
                 + '</div>';
         });
         html += '</div>';
