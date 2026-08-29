@@ -1005,6 +1005,141 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ── Puerta de acceso ── */
+        .gate-screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(1200px 600px at 70% -10%, rgba(201,111,67,0.12), transparent 60%),
+                        radial-gradient(1000px 500px at 10% 110%, rgba(136,165,90,0.08), transparent 55%),
+                        var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+
+        .gate-screen.hidden { display: none; }
+
+        .gate-card {
+            width: 100%;
+            max-width: 430px;
+            background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+            border: 1px solid var(--border-light);
+            border-radius: 18px;
+            padding: 30px 28px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .gate-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 22px;
+            text-align: center;
+        }
+
+        .gate-brand svg { width: 54px; height: 54px; }
+        .gate-brand h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: 2px; color: var(--sand); font-variant: small-caps; }
+        .gate-brand h1 em { font-style: normal; color: var(--terracotta); }
+        .gate-brand p { font-size: 0.76rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; }
+
+        .gate-tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 18px;
+        }
+
+        .gate-tab {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            background: transparent;
+            color: var(--text-3);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gate-tab:hover { color: var(--text-2); }
+        .gate-tab.active { background: var(--bg-4); color: var(--gold); }
+
+        .gate-panel { display: flex; flex-direction: column; gap: 10px; }
+        .gate-panel.hidden { display: none; }
+        .gate-desc { font-size: 0.84rem; color: var(--text-2); line-height: 1.5; margin-bottom: 4px; }
+
+        .gate-panel input {
+            padding: 11px 13px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .gate-panel input:focus { border-color: var(--terracotta); }
+        .gate-panel input::placeholder { color: var(--text-3); }
+
+        .gate-btn {
+            padding: 12px;
+            border-radius: 9px;
+            border: none;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .gate-btn.primary { background: var(--terracotta); color: #2a180c; }
+        .gate-btn.primary:hover { background: var(--gold); }
+
+        .gate-error { font-size: 0.78rem; color: #e58a6e; min-height: 1.1em; text-align: center; }
+
+        .signout-btn {
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-3);
+            color: var(--text-2);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .signout-btn:hover { background: var(--clay); color: #fff; border-color: var(--clay); }
+
+        .guest-mode .sidebar,
+        .guest-mode .tabs { display: none; }
+
+        .guest-panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .guest-panel-header .tag {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: var(--bg-3);
+            border: 1px solid var(--border-light);
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         /* ── Responsive ── */
         @media (max-width: 960px) {
             .main-layout { flex-direction: column; }
@@ -1057,6 +1192,7 @@
             <span style="opacity:0.4">|</span>
             <span id="headerCount">0 estudiantes</span>
         </span>
+        <button class="signout-btn" id="signOutBtn" title="Cerrar sesión">Salir</button>
     </div>
 </header>
 
@@ -1107,10 +1243,44 @@
     </div>
 </div>
 
+<div class="gate-screen" id="gateScreen">
+    <div class="gate-card">
+        <div class="gate-brand">
+            <svg class="brand-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="32" cy="32" r="30" fill="#35281a" stroke="#d9a441" stroke-width="2"/>
+                <circle cx="32" cy="32" r="22" fill="none" stroke="#4d3a26" stroke-width="1.5"/>
+                <ellipse cx="32" cy="32" rx="22" ry="9" fill="none" stroke="#c96f43" stroke-width="1.4"/>
+                <path d="M12 32h40" stroke="#c96f43" stroke-width="1.4" opacity="0.85"/>
+                <path d="M32 10c6 6 6 12 0 20-6 8-6 14 0 22M32 10c-6 6-6 12 0 20 6 8 6 14 0 22" stroke="#88a55a" stroke-width="1.4"/>
+                <circle cx="32" cy="32" r="5" fill="#d9a441"/>
+            </svg>
+            <h1><em>Yenapatur</em> Schedule</h1>
+            <p>Gestión de horarios · intercambio internacional</p>
+        </div>
+        <div class="gate-tabs">
+            <button class="gate-tab active" data-gate="visit">Visitante</button>
+            <button class="gate-tab" data-gate="admin">Administrador</button>
+        </div>
+        <div class="gate-panel" id="gateVisit">
+            <p class="gate-desc">Ingresa tu nombre y marca los bloques de tu horario. No necesitas cuenta: tus datos quedan protegidos.</p>
+            <input type="text" id="guestNameInput" placeholder="Tu nombre..." maxlength="40">
+            <button class="gate-btn primary" id="guestEnterBtn">Entrar con mi horario</button>
+        </div>
+        <div class="gate-panel hidden" id="gateAdmin">
+            <p class="gate-desc">Acceso exclusivo del equipo organizador.</p>
+            <input type="email" id="adminEmailInput" placeholder="Correo de administrador" autocomplete="username">
+            <input type="password" id="adminPassInput" placeholder="Contraseña" autocomplete="current-password">
+            <button class="gate-btn primary" id="adminLoginBtn">Iniciar sesión</button>
+            <span class="gate-error" id="authError"></span>
+        </div>
+    </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
 <script>
@@ -1215,6 +1385,14 @@
     let detailFilter = '';
     let dataLoaded = false;
     let db = null;
+    let auth = null;
+    let currentUser = null;
+    let isAdmin = false;
+    let unsubscribe = null;
+    let guestUid = null;
+    let guestDoc = null;
+    let pendingGuestName = '';
+    const ADMIN_EMAIL = 'yenapatur@gmail.com';
 
     // ── DOM ──
     const studentNameInput = document.getElementById('studentNameInput');
@@ -1230,6 +1408,16 @@
     const syncDot = document.getElementById('syncDot');
     const syncLabel = document.getElementById('syncLabel');
     const configBanner = document.getElementById('configBanner');
+    const gateScreen = document.getElementById('gateScreen');
+    const gateAdminPanel = document.getElementById('gateAdmin');
+    const gateVisitPanel = document.getElementById('gateVisit');
+    const guestNameInput = document.getElementById('guestNameInput');
+    const guestEnterBtn = document.getElementById('guestEnterBtn');
+    const adminEmailInput = document.getElementById('adminEmailInput');
+    const adminPassInput = document.getElementById('adminPassInput');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const authError = document.getElementById('authError');
+    const signOutBtn = document.getElementById('signOutBtn');
 
     // ── Utilidades ──
     function escHtml(s) {
@@ -1316,7 +1504,8 @@
     }
 
     function attachListener() {
-        db.collection('students')
+        if (unsubscribe) unsubscribe();
+        unsubscribe = db.collection('students')
             .orderBy('createdAt', 'asc')
             .onSnapshot(snap => {
                 const list = [];
@@ -1354,14 +1543,174 @@
             syncDot.className = 'sync-dot error';
             syncLabel.textContent = 'Sin configurar';
             dataLoaded = true;
-            render();
+            showGate();
             return;
         }
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
+        auth = firebase.auth();
         db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-        attachListener();
-        render();
+        auth.onAuthStateChanged(onAuthChanged);
+        setSync('connecting');
+    }
+
+    // ── Autenticación y modo visitante ──
+    function showGate() {
+        gateScreen.classList.remove('hidden');
+        signOutBtn.style.display = 'none';
+        document.body.classList.remove('guest-mode');
+    }
+
+    function hideGate() {
+        gateScreen.classList.add('hidden');
+        signOutBtn.style.display = 'inline-flex';
+    }
+
+    function onAuthChanged(user) {
+        currentUser = user || null;
+        if (!user) {
+            isAdmin = false;
+            guestDoc = null;
+            guestUid = null;
+            pendingGuestName = '';
+            if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+            document.body.classList.remove('guest-mode');
+            setSync('connecting');
+            showGate();
+            return;
+        }
+        if (!user.isAnonymous && user.email === ADMIN_EMAIL) {
+            isAdmin = true;
+            hideGate();
+            document.body.classList.remove('guest-mode');
+            attachListener();
+            render();
+            return;
+        }
+        if (user.isAnonymous) {
+            isAdmin = false;
+            hideGate();
+            document.body.classList.add('guest-mode');
+            loadGuest(user.uid);
+            return;
+        }
+        auth.signOut();
+        showToast('Acceso no autorizado para esta cuenta', true);
+    }
+
+    function loadGuest(uid) {
+        guestUid = uid;
+        db.collection('students').doc(uid).get()
+            .then(docSnap => {
+                if (docSnap.exists) {
+                    const d = docSnap.data();
+                    const sc = d.schedule || {};
+                    DAY_KEYS.forEach(dk => { if (!sc[dk]) sc[dk] = []; });
+                    guestDoc = {
+                        id: uid,
+                        name: d.name || '',
+                        country: d.country || '',
+                        color: d.color || '#c96f43',
+                        schedule: sc
+                    };
+                    setSync('synced');
+                    if (pendingGuestName && pendingGuestName !== guestDoc.name) {
+                        const newName = pendingGuestName;
+                        pendingGuestName = '';
+                        db.collection('students').doc(uid).update({ name: newName })
+                            .then(() => { guestDoc.name = newName; renderGuest(); })
+                            .catch(() => { guestDoc.name = newName; renderGuest(); });
+                    } else {
+                        pendingGuestName = '';
+                        renderGuest();
+                    }
+                } else if (pendingGuestName) {
+                    createGuest(uid, pendingGuestName);
+                } else {
+                    showToast('Escribe tu nombre para ingresar', true);
+                    auth.signOut();
+                }
+            })
+            .catch(err => {
+                showToast('No se pudo cargar tu horario: ' + friendlyError(err), true);
+                auth.signOut();
+            });
+    }
+
+    function createGuest(uid, name) {
+        const doc = {
+            name: name,
+            country: '',
+            color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+            schedule: {},
+            owner: uid,
+            createdAt: new Date()
+        };
+        DAY_KEYS.forEach(d => doc.schedule[d] = []);
+        db.collection('students').doc(uid).set(doc)
+            .then(() => {
+                guestDoc = { id: uid, name: name, country: '', color: doc.color, schedule: doc.schedule };
+                pendingGuestName = '';
+                setSync('synced');
+                showToast('Bienvenido/a, ' + name);
+                renderGuest();
+            })
+            .catch(err => {
+                showToast('No se pudo guardar tu información: ' + friendlyError(err), true);
+            });
+    }
+
+    function toggleGuestBlock(dayKey, block) {
+        if (!guestDoc) return;
+        const occupied = guestDoc.schedule[dayKey].includes(block);
+        const fv = firebase.firestore.FieldValue;
+        db.collection('students').doc(guestUid).update({
+            ['schedule.' + dayKey]: occupied ? fv.arrayRemove(block) : fv.arrayUnion(block)
+        }).then(() => {
+            if (occupied) guestDoc.schedule[dayKey] = guestDoc.schedule[dayKey].filter(x => x !== block);
+            else guestDoc.schedule[dayKey].push(block);
+            renderGuest();
+        }).catch(err => {
+            showToast('No se pudo actualizar: ' + friendlyError(err), true);
+        });
+    }
+
+    function renderGuest() {
+        const nb = guestDoc ? countBlocks(guestDoc) : 0;
+        headerCount.textContent = guestDoc
+            ? (guestDoc.name + ' · ' + nb + ' bloque' + (nb === 1 ? '' : 's'))
+            : '';
+        if (!guestDoc) {
+            scheduleContent.innerHTML = loaderHtml();
+            return;
+        }
+        let html = '<div class="schedule-wrapper">'
+            + '<div class="guest-panel-header">'
+            + '<span class="tag">Visitante</span>'
+            + '<span class="color-dot" style="background:' + guestDoc.color + '"></span>'
+            + '<strong>' + escHtml(guestDoc.name) + '</strong>'
+            + '<span class="hint">Clic en una celda = asignar / quitar bloque</span>'
+            + '</div>'
+            + '<div class="schedule-grid">';
+        html += '<div class="grid-cell header"></div>';
+        DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
+        BLOCKS.forEach(block => {
+            html += '<div class="grid-cell row-header">' + block + '</div>';
+            DAY_KEYS.forEach(dk => {
+                const occ = guestDoc.schedule[dk].includes(block);
+                const cls = occ ? ' block-cell occupied' : ' block-cell';
+                const bg = occ ? 'background:' + guestDoc.color + ';' : '';
+                html += '<div class="grid-cell' + cls + '" data-day="' + dk + '" data-block="' + block + '"'
+                    + ' style="' + bg + '">' + (occ ? '&#10003;' : '') + '</div>';
+            });
+        });
+        html += '</div>'
+            + '<p style="margin-top:14px;font-size:0.8rem;color:var(--text-3)">Tu privacidad está protegida: solo tú y el equipo administrador pueden ver tu horario.</p>'
+            + '</div>';
+        scheduleContent.innerHTML = html;
+        scheduleContent.querySelectorAll('.block-cell').forEach(cell => {
+            cell.addEventListener('click', () => toggleGuestBlock(cell.dataset.day, cell.dataset.block));
+        });
     }
 
     // ── Gestión de estudiantes (escrituras en Firestore) ──
@@ -1431,6 +1780,58 @@
 
     addStudentBtn.addEventListener('click', () => addStudent(studentNameInput.value, studentCountrySelect.value));
     studentNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(studentNameInput.value, studentCountrySelect.value); });
+
+    // ── Puerta de acceso (login / visitante) ──
+    function authErrorMessage(err) {
+        const code = err && err.code ? err.code : '';
+        if (code === 'auth/invalid-email') return 'Correo no válido.';
+        if (code === 'auth/wrong-password' || code === 'auth/user-not-found' || code === 'auth/invalid-credential') return 'Credenciales incorrectas.';
+        if (code === 'auth/too-many-requests') return 'Demasiados intentos. Intenta más tarde.';
+        if (code === 'auth/network-request-failed') return 'Sin conexión. Revisa tu red.';
+        if (code === 'auth/operation-not-allowed') return 'El acceso con correo no está habilitado en Firebase.';
+        if (code === 'auth/email-already-in-use') return 'Ese correo ya está en uso.';
+        return (err && err.message) || 'Error desconocido';
+    }
+
+    document.querySelectorAll('.gate-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.gate-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const admin = tab.dataset.gate === 'admin';
+            gateAdminPanel.classList.toggle('hidden', !admin);
+            gateVisitPanel.classList.toggle('hidden', admin);
+            authError.textContent = '';
+        });
+    });
+
+    guestEnterBtn.addEventListener('click', () => {
+        const name = guestNameInput.value.trim();
+        if (!name) { showToast('Escribe tu nombre', true); return; }
+        pendingGuestName = name;
+        if (currentUser && currentUser.isAnonymous) {
+            loadGuest(currentUser.uid);
+        } else {
+            auth.signInAnonymously().catch(err => {
+                showToast('No se pudo entrar como visitante: ' + authErrorMessage(err), true);
+            });
+        }
+    });
+    guestNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') guestEnterBtn.click(); });
+
+    adminLoginBtn.addEventListener('click', () => {
+        authError.textContent = '';
+        const email = adminEmailInput.value.trim();
+        const pass = adminPassInput.value;
+        if (!email || !pass) { authError.textContent = 'Ingresa correo y contraseña.'; return; }
+        auth.signInWithEmailAndPassword(email, pass).catch(err => {
+            authError.textContent = authErrorMessage(err);
+        });
+    });
+    adminPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') adminLoginBtn.click(); });
+
+    signOutBtn.addEventListener('click', () => {
+        auth.signOut().catch(() => {});
+    });
 
     // ── Render maestro ──
     function render() {
