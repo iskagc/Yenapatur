@@ -1261,6 +1261,114 @@
         .confirm-ok.danger:hover { background: #d4583f; }
 
         /* ── Responsive ── */
+        .gate-btn.ghost {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            color: var(--text-2);
+        }
+
+        .gate-btn.ghost:hover { border-color: var(--terracotta); color: var(--terracotta); background: rgba(201,111,67,0.08); }
+
+        .range-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .range-form input[type="date"] {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text-2);
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        .range-form input[type="date"]:focus { border-color: var(--terracotta); }
+
+        .range-form input[type="text"] {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text);
+            font-size: 0.82rem;
+            outline: none;
+            flex: 1 1 120px;
+            min-width: 140px;
+        }
+
+        .range-form input[type="text"]:focus { border-color: var(--terracotta); }
+
+        .range-form .add-mini {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: none;
+            background: var(--terracotta);
+            color: #2a180c;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .range-form .add-mini:hover { background: var(--gold); }
+
+        .range-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+        .range-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: var(--bg-3);
+            border: 1px solid var(--border);
+        }
+
+        .range-item .range-ico { font-size: 0.95rem; }
+        .range-item .range-meta { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .range-item .range-dates { font-size: 0.8rem; color: var(--text-2); }
+        .range-item .range-label { font-size: 0.8rem; font-weight: 600; color: var(--gold); }
+        .range-item .range-del {
+            border: none;
+            background: transparent;
+            color: #e58a6e;
+            font-size: 1.1rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 4px;
+        }
+
+        .range-item .range-del:hover { color: #ff5a3c; }
+        .range-empty { font-size: 0.8rem; color: var(--text-3); padding: 6px 2px; }
+
+        .week-ref {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 12px 2px 2px;
+            font-size: 0.85rem;
+            color: var(--text-2);
+        }
+
+        .week-ref input[type="date"] {
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text-2);
+            font-size: 0.82rem;
+            outline: none;
+        }
+
+        .week-ref input[type="date"]:focus { border-color: var(--terracotta); }
+
+        .grid-cell.header small { display: block; font-size: 0.55rem; font-weight: 500; color: var(--text-3); margin-top: 2px; }
+
         @media (max-width: 960px) {
             .main-layout { flex-direction: column; }
             .sidebar { width: 100%; min-width: 100%; max-height: 300px; }
@@ -1385,10 +1493,13 @@
             <button class="gate-tab" data-gate="admin">Administrador</button>
         </div>
         <div class="gate-panel" id="gateVisit">
-            <p class="gate-desc">Ingresa tu nombre y marca los bloques de tu horario. No necesitas cuenta: tus datos quedan protegidos.</p>
+            <p class="gate-desc">Crea una cuenta gratuita con tu correo para registrar tu horario y poder volver a editarlo cuando quieras, desde cualquier dispositivo.</p>
             <input type="text" id="guestNameInput" placeholder="Tu nombre..." maxlength="40">
             <select id="guestCountrySelect"></select>
-            <button class="gate-btn primary" id="guestEnterBtn">Entrar con mi horario</button>
+            <input type="email" id="guestEmailInput" placeholder="Correo electrónico" autocomplete="username">
+            <input type="password" id="guestPassInput" placeholder="Contraseña (mín. 6 caracteres)" autocomplete="new-password">
+            <button class="gate-btn primary" id="guestRegisterBtn">Crear cuenta y entrar</button>
+            <button class="gate-btn ghost" id="guestLoginBtn">Ya tengo cuenta &middot; entrar</button>
             <span class="gate-error" id="guestError"></span>
         </div>
         <div class="gate-panel hidden" id="gateAdmin">
@@ -1541,6 +1652,7 @@
     let guestUid = null;
     let guestDoc = null;
     let pendingGuestName = '';
+    let weekRef = null;
     const ADMIN_EMAIL = 'yenapatur@gmail.com';
 
     // ── DOM ──
@@ -1562,7 +1674,10 @@
     const gateVisitPanel = document.getElementById('gateVisit');
     const guestNameInput = document.getElementById('guestNameInput');
     const guestCountrySelect = document.getElementById('guestCountrySelect');
-    const guestEnterBtn = document.getElementById('guestEnterBtn');
+    const guestEmailInput = document.getElementById('guestEmailInput');
+    const guestPassInput = document.getElementById('guestPassInput');
+    const guestRegisterBtn = document.getElementById('guestRegisterBtn');
+    const guestLoginBtn = document.getElementById('guestLoginBtn');
     const guestError = document.getElementById('guestError');
     const adminEmailInput = document.getElementById('adminEmailInput');
     const adminPassInput = document.getElementById('adminPassInput');
@@ -1675,6 +1790,8 @@
                         country: d.country || '',
                         color: d.color || '#c96f43',
                         schedule: d.schedule || {},
+                        trips: d.trips || [],
+                        vacations: d.vacations || [],
                         createdAt: d.createdAt || null
                     };
                     DAY_KEYS.forEach(dk => { if (!s.schedule[dk]) s.schedule[dk] = []; });
@@ -1737,6 +1854,7 @@
             showGate();
             return;
         }
+        guestUid = user.uid;
         if (!user.isAnonymous && user.email === ADMIN_EMAIL) {
             isAdmin = true;
             hideGate();
@@ -1745,15 +1863,11 @@
             render();
             return;
         }
-        if (user.isAnonymous) {
-            isAdmin = false;
-            hideGate();
-            document.body.classList.add('guest-mode');
-            loadGuest(user.uid);
-            return;
-        }
-        auth.signOut();
-        showToast('Acceso no autorizado para esta cuenta', true);
+        // Visitante con cuenta (o sesión anónima heredada)
+        isAdmin = false;
+        hideGate();
+        document.body.classList.add('guest-mode');
+        loadGuest(user.uid);
     }
 
     function loadGuest(uid) {
@@ -1783,7 +1897,9 @@
             name: d.name || '',
             country: d.country || '',
             color: d.color || '#c96f43',
-            schedule: sc
+            schedule: sc,
+            trips: d.trips || [],
+            vacations: d.vacations || []
         };
         pendingGuestName = '';
         setSync('synced');
@@ -1795,8 +1911,22 @@
         const ref = db.collection('students').doc(slug);
         ref.get().then(docSnap => {
             if (docSnap.exists) {
-                if (docSnap.data().owner === currentUser.uid) {
-                    hydrateGuest(slug, docSnap.data());
+                const d = docSnap.data();
+                if (d.owner === currentUser.uid) {
+                    hydrateGuest(slug, d);
+                } else if (!d.real) {
+                    // Reclama un horario creado antes sin cuenta (sesión anónima)
+                    ref.update({ owner: currentUser.uid, real: true })
+                        .then(() => {
+                            d.owner = currentUser.uid;
+                            d.real = true;
+                            hydrateGuest(slug, d);
+                            showToast('Tu horario anterior quedó vinculado a esta cuenta');
+                        })
+                        .catch(err => {
+                            showToast('No se pudo vincular tu horario: ' + friendlyError(err), true);
+                            auth.signOut();
+                        });
                 } else {
                     duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
                 }
@@ -1807,7 +1937,10 @@
                 country: country,
                 color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
                 schedule: {},
+                trips: [],
+                vacations: [],
                 owner: currentUser.uid,
+                real: true,
                 key: slug,
                 createdAt: new Date()
             };
@@ -1819,7 +1952,9 @@
                         name: name,
                         country: country,
                         color: doc.color,
-                        schedule: doc.schedule
+                        schedule: doc.schedule,
+                        trips: [],
+                        vacations: []
                     };
                     pendingGuestName = '';
                     setSync('synced');
@@ -1900,13 +2035,15 @@
                 html += '<div class="grid-cell lunch-row"><span>' + LUNCH_ROW + '</span><span class="lunch-time">' + LUNCH_RANGE + '</span></div>';
             }
         });
-        html += '</div>'
+html += '</div>'
+            + rangesHtmlFor(guestDoc)
             + '<p style="margin-top:14px;font-size:0.8rem;color:var(--text-3)">Tu privacidad está protegida: solo tú y el equipo administrador pueden ver tu horario.</p>'
             + '</div>';
         scheduleContent.innerHTML = html;
         scheduleContent.querySelectorAll('.block-cell').forEach(cell => {
             cell.addEventListener('click', () => toggleGuestBlock(cell.dataset.day, cell.dataset.block));
         });
+        wireGuestRanges(scheduleContent);
         const gcSel = scheduleContent.querySelector('[data-guest-country]');
         if (gcSel) gcSel.addEventListener('change', () => setGuestCountry(gcSel.value));
     }
@@ -1924,6 +2061,102 @@
             });
     }
 
+    // ── Vacaciones y viajes/planes (rangos de fechas) ──
+    function rangeItemsHtml(kind, items) {
+        if (!items || !items.length) return '<span class="range-empty">No hay entradas todavía.</span>';
+        const ico = kind === 'vacations' ? '&#127808;' : '&#9992;&#65039;';
+        return items.map(r => {
+            if (!r || !r.start) return '';
+            return '<div class="range-item">'
+                + '<span class="range-ico">' + ico + '</span>'
+                + '<span class="range-meta">'
+                + '<span class="range-dates">' + fmtRange(r) + '</span>'
+                + (r.label ? '<span class="range-label">' + escHtml(r.label) + '</span>' : '')
+                + '</span>'
+                + '<button class="range-del" data-range-del="' + kind + '" data-range-id="' + escHtml(r.id) + '" title="Eliminar">&times;</button>'
+                + '</div>';
+        }).join('');
+    }
+
+    function rangesHtmlFor(data) {
+        const vac = data && data.vacations ? data.vacations : [];
+        const trips = data && data.trips ? data.trips : [];
+        return '<div class="panel-section" style="margin-top:20px">'
+            + '<div class="section-title">Vacaciones <span class="hint" style="font-size:0.72rem">en esos días tus clases no cuentan y quedas libre</span></div>'
+            + '<div class="range-form">'
+            + '<input type="date" data-range-start="vacations">'
+            + '<span style="color:var(--text-3)">&ndash;</span>'
+            + '<input type="date" data-range-end="vacations">'
+            + '<input type="text" data-range-label="vacations" placeholder="Etiqueta (opcional)" maxlength="40">'
+            + '<button class="add-mini" data-range-add="vacations">+ Añadir</button>'
+            + '</div>'
+            + '<div class="range-list">' + rangeItemsHtml('vacations', vac) + '</div></div>'
+            + '<div class="panel-section" style="margin-top:16px">'
+            + '<div class="section-title">Viajes y planes <span class="hint" style="font-size:0.72rem">en esos días no estarás disponible, aunque haya vacaciones</span></div>'
+            + '<div class="range-form">'
+            + '<input type="date" data-range-start="trips">'
+            + '<span style="color:var(--text-3)">&ndash;</span>'
+            + '<input type="date" data-range-end="trips">'
+            + '<input type="text" data-range-label="trips" placeholder="Etiqueta (opcional)" maxlength="40">'
+            + '<button class="add-mini" data-range-add="trips">+ Añadir</button>'
+            + '</div>'
+            + '<div class="range-list">' + rangeItemsHtml('trips', trips) + '</div></div>';
+    }
+
+    function readRangeForm(scope, kind) {
+        return {
+            start: (scope.querySelector('[data-range-start="' + kind + '"]') || {}).value || '',
+            end: (scope.querySelector('[data-range-end="' + kind + '"]') || {}).value || '',
+            label: (scope.querySelector('[data-range-label="' + kind + '"]') || {}).value || ''
+        };
+    }
+
+    function validateRange(kind, f) {
+        if (!f.start || !f.end) { showToast('Elige fecha de inicio y fin', true); return false; }
+        if (f.end < f.start) { showToast('La fecha de fin no puede ser anterior al inicio', true); return false; }
+        return true;
+    }
+
+    function addGuestRange(kind, f) {
+        if (!guestDoc) return;
+        const item = { id: 'r' + Date.now(), start: f.start, end: f.end, label: (f.label || '').trim() || '' };
+        const fv = firebase.firestore.FieldValue;
+        db.collection('students').doc(guestDoc.id).update({ [kind]: fv.arrayUnion(item) })
+            .then(() => {
+                guestDoc[kind] = guestDoc[kind] || [];
+                guestDoc[kind].push(item);
+                renderGuest();
+            })
+            .catch(err => showToast('No se pudo guardar: ' + friendlyError(err), true));
+    }
+
+    function removeGuestRange(kind, id) {
+        const item = (guestDoc[kind] || []).find(x => x.id === id);
+        if (!item) return;
+        const fv = firebase.firestore.FieldValue;
+        db.collection('students').doc(guestDoc.id).update({ [kind]: fv.arrayRemove(item) })
+            .then(() => {
+                guestDoc[kind] = (guestDoc[kind] || []).filter(x => x.id !== id);
+                renderGuest();
+            })
+            .catch(err => showToast('No se pudo eliminar: ' + friendlyError(err), true));
+    }
+
+    function wireGuestRanges(scope) {
+        scope.querySelectorAll('[data-range-add]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const kind = btn.dataset.rangeAdd;
+                const f = readRangeForm(scope, kind);
+                if (validateRange(kind, f)) addGuestRange(kind, f);
+            });
+        });
+        scope.querySelectorAll('[data-range-del]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (guestDoc) removeGuestRange(btn.dataset.rangeDel, btn.dataset.rangeId);
+            });
+        });
+    }
+
     // ── Gestión de estudiantes (escrituras en Firestore) ──
     function makeSlug(name, country) {
         const base = name + '__' + (country || 'xx');
@@ -1932,6 +2165,33 @@
             .replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-+|-+$/g, '');
+    }
+
+    // ── Fechas y rangos (vacaciones / viajes) ──
+    function pad2(n) { return (n < 10 ? '0' : '') + n; }
+    function isoDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+    function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+    function parseIso(iso) { const p = String(iso).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+    function mondayOf(d) {
+        const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+        return x;
+    }
+    function weekDates() {
+        const m = mondayOf(weekRef || new Date());
+        const arr = [];
+        for (let i = 0; i < 6; i++) arr.push(isoDate(addDays(m, i)));
+        return arr;
+    }
+    function fmtDateShort(iso) {
+        const p = String(iso).split('-');
+        return p[2] + '/' + p[1];
+    }
+    function coversRange(r, iso) {
+        return !!r && !!r.start && !!r.end && iso >= r.start && iso <= r.end;
+    }
+    function fmtRange(r) {
+        return fmtDateShort(r.start) + ' – ' + fmtDateShort(r.end);
     }
 
     function addStudent(name, country) {
@@ -1950,6 +2210,8 @@
                 country: country || '',
                 color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
                 schedule: {},
+                trips: [],
+                vacations: [],
                 key: slug,
                 createdAt: new Date()
             };
@@ -1991,6 +2253,48 @@
     function setStudentCountry(id, code) {
         db.collection('students').doc(id).update({ country: code }).catch(err => {
             showToast('No se pudo actualizar el país: ' + friendlyError(err), true);
+        });
+    }
+
+    function addStudentRange(id, kind, f) {
+        const s = students.find(x => x.id === id);
+        const item = { id: 'r' + Date.now(), start: f.start, end: f.end, label: (f.label || '').trim() || '' };
+        const fv = firebase.firestore.FieldValue;
+        db.collection('students').doc(id).update({ [kind]: fv.arrayUnion(item) })
+            .catch(err => showToast('No se pudo guardar: ' + friendlyError(err), true));
+    }
+
+    function removeStudentRange(id, kind, rangeId) {
+        const s = students.find(x => x.id === id);
+        if (!s) return;
+        const item = (s[kind] || []).find(x => x.id === rangeId);
+        if (!item) return;
+        const fv = firebase.firestore.FieldValue;
+        db.collection('students').doc(id).update({ [kind]: fv.arrayRemove(item) })
+            .catch(err => showToast('No se pudo eliminar: ' + friendlyError(err), true));
+    }
+
+    function wireAdminRanges(scope, s) {
+        scope.querySelectorAll('[data-range-add]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const kind = btn.dataset.rangeAdd;
+                const f = readRangeForm(scope, kind);
+                if (validateRange(kind, f)) addStudentRange(s.id, kind, f);
+            });
+        });
+        scope.querySelectorAll('[data-range-del]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const kind = btn.dataset.rangeDel;
+                const rangeId = btn.dataset.rangeId;
+                const obj = (s[kind] || []).find(x => x.id === rangeId);
+                const kindLabel = kind === 'vacations' ? 'vacaciones' : 'viaje/plan';
+                const when = obj ? ' (' + fmtRange(obj) + ')' : '';
+                askConfirm(
+                    '¿Eliminar "' + kindLabel + '" de "' + s.name + '"' + when + '?',
+                    () => removeStudentRange(s.id, kind, rangeId),
+                    { danger: true, okText: 'Eliminar' }
+                );
+            });
         });
     }
 
@@ -2038,20 +2342,36 @@
         });
     });
 
-    guestEnterBtn.addEventListener('click', () => {
+    guestRegisterBtn.addEventListener('click', () => {
         guestError.textContent = '';
         const name = guestNameInput.value.trim();
-        if (!name) { guestError.textContent = 'Escribe tu nombre para continuar.'; return; }
+        const email = guestEmailInput.value.trim();
+        const pass = guestPassInput.value;
+        if (!name) { guestError.textContent = 'Escribe tu nombre.'; return; }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { guestError.textContent = 'Ingresa un correo válido.'; return; }
+        if (pass.length < 6) { guestError.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
         pendingGuestName = name;
-        if (currentUser && currentUser.isAnonymous) {
-            loadGuest(currentUser.uid);
-        } else {
-            auth.signInAnonymously().catch(err => {
-                guestError.textContent = authErrorMessage(err);
-            });
-        }
+        auth.createUserWithEmailAndPassword(email, pass).catch(err => {
+            pendingGuestName = '';
+            guestError.textContent = authErrorMessage(err);
+        });
     });
-    guestNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') guestEnterBtn.click(); });
+
+    guestLoginBtn.addEventListener('click', () => {
+        guestError.textContent = '';
+        const name = guestNameInput.value.trim();
+        const email = guestEmailInput.value.trim();
+        const pass = guestPassInput.value;
+        if (!name) { guestError.textContent = 'Escribe tu nombre.'; return; }
+        if (!email || !pass) { guestError.textContent = 'Ingresa correo y contraseña.'; return; }
+        pendingGuestName = name;
+        auth.signInWithEmailAndPassword(email, pass).catch(err => {
+            pendingGuestName = '';
+            guestError.textContent = authErrorMessage(err);
+        });
+    });
+    guestNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') guestRegisterBtn.click(); });
+    guestPassInput.addEventListener('keydown', e => { if (e.key === 'Enter') guestRegisterBtn.click(); });
 
     adminLoginBtn.addEventListener('click', () => {
         authError.textContent = '';
@@ -2226,7 +2546,9 @@
             }
         });
 
-        html += '</div></div>';
+        html += '</div>'
+            + rangesHtmlFor(s)
+            + '</div>';
         scheduleContent.innerHTML = html;
 
         scheduleContent.querySelectorAll('.block-cell').forEach(cell => {
@@ -2241,6 +2563,7 @@
                 );
             });
         });
+        wireAdminRanges(scheduleContent, s);
 
         const countrySel = scheduleContent.querySelector('[data-country]');
         if (countrySel) {
@@ -2259,14 +2582,25 @@
     }
 
     // ── Comparación ──
-    function buildAvailability() {
+    function buildAvailability(week) {
+        const dates = week || null;
         const avail = {};
         DAY_KEYS.forEach((dk, di) => {
             avail[dk] = { dayIdx: di };
             BLOCKS.forEach(b => {
                 const free = [], occ = [];
                 students.forEach(s => {
-                    if (s.schedule[dk].includes(b)) occ.push(s); else free.push(s);
+                    let isFree;
+                    if (dates) {
+                        const iso = dates[di];
+                        const onTrip = (s.trips || []).some(r => coversRange(r, iso));
+                        const onVac = (s.vacations || []).some(r => coversRange(r, iso));
+                        const busy = s.schedule[dk].includes(b);
+                        isFree = onTrip ? false : onVac ? true : !busy;
+                    } else {
+                        isFree = !s.schedule[dk].includes(b);
+                    }
+                    (isFree ? free : occ).push(s);
                 });
                 const pct = students.length ? Math.round((free.length / students.length) * 100) : 0;
                 avail[dk][b] = { free: free, occ: occ, pct: pct, n: free.length };
@@ -2291,7 +2625,8 @@
             return;
         }
 
-        const avail = buildAvailability();
+        const dates = weekDates();
+        const avail = buildAvailability(dates);
         const totalCells = BLOCKS.length * DAY_KEYS.length;
         let cells100 = 0;
         let totalFree = 0;
@@ -2307,12 +2642,18 @@
         let html = '<div class="schedule-wrapper">'
             + '<div class="comparison-header">'
             + '<h3>Comparación de disponibilidad conjunta</h3>'
-            + '<p>' + students.length + ' estudiantes comparados &middot; haz clic en cualquier bloque para ver quién está ocupado o libre</p>'
+            + '<p>' + students.length + ' estudiantes comparados &middot; incluye vacaciones y viajes/planes de la semana de referencia &middot; haz clic en un bloque para ver quién está ocupado o libre</p>'
             + '</div>'
             + '<div class="comparison-summary">'
             + '<div class="mini-stat"><div class="v">' + cells100 + '</div><div class="l">bloques 100% libres</div></div>'
             + '<div class="mini-stat"><div class="v">' + avg + '%</div><div class="l">disponibilidad media</div></div>'
             + '<div class="mini-stat"><div class="v">' + students.length + '</div><div class="l">estudiantes</div></div>'
+            + '</div>'
+            + '<div class="week-ref">'
+            + '<label for="weekRefInput">Semana de referencia:</label>'
+            + '<input type="date" id="weekRefInput" value="' + isoDate(mondayOf(weekRef || new Date())) + '">'
+            + '<span class="hint">Lun ' + fmtDateShort(dates[0]) + ' &ndash; S&aacute;b ' + fmtDateShort(dates[5])
+            + (weekRef ? '' : ' &middot; semana actual') + '</span>'
             + '</div>';
 
         // Matriz de disponibilidad
@@ -2326,7 +2667,7 @@
 
         html += '<div class="comparison-grid">';
         html += '<div class="grid-cell header"></div>';
-        DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
+        DAYS.forEach((d, di) => html += '<div class="grid-cell header">' + d + '<small>' + fmtDateShort(dates[di]) + '</small></div>');
 
         BLOCKS.forEach(block => {
             html += '<div class="grid-cell row-header"><span class="row-block">' + block + '</span><span class="row-time">' + BLOCK_TIMES[block] + '</span></div>';
@@ -2403,6 +2744,14 @@
                 renderCompare();
             });
         });
+        const wr = document.getElementById('weekRefInput');
+        if (wr) wr.addEventListener('change', e => {
+            weekRef = e.target.value ? parseIso(e.target.value) : null;
+            compareSel = null;
+            rankShowAll = false;
+            detailFilter = '';
+            renderCompare();
+        });
         const rt = document.getElementById('rankToggle');
         if (rt) rt.addEventListener('click', () => { rankShowAll = !rankShowAll; renderCompare(); });
         const dc = document.getElementById('detailClose');
@@ -2412,7 +2761,7 @@
     }
 
     function detailHtml(dk, block, a) {
-        const dayName = DAYS[availDayIdx(dk)];
+        const dayName = DAYS[availDayIdx(dk)] + ' ' + fmtDateShort(weekDates()[availDayIdx(dk)]);
         let badgeCls = tierClass(a.pct);
         let html = '<div class="detail-head">'
             + '<h4>Bloque ' + block + ' &middot; ' + dayName + '</h4>'
@@ -2448,7 +2797,7 @@
         const chipsF = document.getElementById('chipsFree');
         const chipsB = document.getElementById('chipsBusy');
         if (!panel || !chipsF || !chipsB) return;
-        const a = buildAvailability();
+        const a = buildAvailability(weekDates());
         const cell = a[compareSel.dayKey][compareSel.block];
         const q = detailFilter.toLowerCase();
         chipsF.innerHTML = chipsHtml(cell.free.filter(s => filterMatch(s, q)), 'chip-free');
