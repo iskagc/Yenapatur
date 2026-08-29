@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yenapatur · Comparador de Horarios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #1d1610;
+            --bg-2: #281e14;
+            --bg-3: #35281a;
+            --bg-4: #42301f;
+            --border: #4d3a26;
+            --border-light: #5d472f;
+            --text: #f0e5d4;
+            --text-2: #c8b496;
+            --text-3: #9a8466;
+            --terracotta: #c96f43;
+            --terracotta-dark: #a85430;
+            --olive: #88a55a;
+            --olive-soft: #b0c47e;
+            --gold: #d9a441;
+            --clay: #c2452e;
+            --sand: #d8c9a6;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+            background: radial-gradient(1200px 600px at 70% -10%, rgba(201,111,67,0.10), transparent 60%),
+                        radial-gradient(1000px 500px at 10% 110%, rgba(136,165,90,0.08), transparent 55%),
+                        var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        a {
+            color: var(--gold);
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+            border-bottom: 1px solid var(--border);
+            padding: 18px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(90deg,
+                rgba(255,255,255,0.015) 0 2px,
+                transparent 2px 42px);
+            pointer-events: none;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
+        }
+
+        .brand-text h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--sand);
+            line-height: 1;
+            font-variant: small-caps;
+        }
+
+        .brand-text h1 em {
+            font-style: normal;
+            color: var(--terracotta);
+        }
+
+        .brand-text p {
+            color: var(--text-3);
+            font-size: 0.78rem;
+            margin-top: 4px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .header-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-end;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 30px;
+            background: var(--bg-3);
+            font-size: 0.8rem;
+            color: var(--text-2);
+        }
+
+        .header-badge .globe-ico {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ── Layout ── */
+        .main-layout {
+            display: flex;
+            min-height: calc(100vh - 90px);
+        }
+
+        .sidebar {
+            width: 320px;
+            min-width: 320px;
+            background: var(--bg-2);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h2 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
+        .add-student-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .row-form {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-student-form input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .add-student-form input[type="text"]:focus {
+            border-color: var(--terracotta);
+        }
+
+        .add-student-form input[type="text"]::placeholder {
+            color: var(--text-3);
+        }
+
+        .add-student-form select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text-2);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .add-btn {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--terracotta);
+            color: #2a180c;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .add-btn:hover {
+            background: var(--gold);
+        }
+
+        .student-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .student-list::-webkit-scrollbar { width: 7px; }
+        .student-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .student-list::-webkit-scrollbar-track { background: transparent; }
+
+        .student-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: 4px;
+            border: 2px solid transparent;
+        }
+
+        .student-card:hover { background: var(--bg-3); }
+        .student-card.selected {
+            background: var(--bg-3);
+            border-color: var(--gold);
+        }
+
+        .flag {
+            width: 26px;
+            height: 18px;
+            border-radius: 3px;
+            object-fit: cover;
+            box-shadow: 0 0 4px rgba(0,0,0,.4);
+            flex-shrink: 0;
+        }
+
+        .flag-placeholder {
+            width: 26px;
+            height: 18px;
+            border-radius: 3px;
+            background: var(--bg-4);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-3);
+            flex-shrink: 0;
+        }
+
+        .student-name {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .student-blocks {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            background: var(--bg);
+            padding: 2px 7px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .delete-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .delete-btn:hover { background: var(--clay); color: #fff; }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-3);
+        }
+
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+        .empty-state p { font-size: 0.85rem; line-height: 1.5; }
+
+        /* ── Content ── */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-2);
+            padding: 0 20px;
+        }
+
+        .tab {
+            padding: 14px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-3);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+            letter-spacing: 0.3px;
+        }
+
+        .tab:hover { color: var(--text-2); }
+        .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+        .tab-content {
+            flex: 1;
+            overflow: auto;
+            padding: 22px;
+        }
+
+        .tab-content::-webkit-scrollbar { width: 9px; }
+        .tab-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-3);
+        }
+
+        .no-data .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+        .no-data h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--text-2); }
+
+        /* ── Schedule ── */
+        .schedule-wrapper { max-width: 980px; margin: 0 auto; }
+
+        .schedule-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .current-student {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            background: var(--bg-3);
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .current-student select {
+            background: var(--bg-4);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 0.78rem;
+            max-width: 150px;
+        }
+
+        .hint { font-size: 0.82rem; color: var(--text-3); margin-left: auto; }
+
+        .schedule-grid, .comparison-grid {
+            display: grid;
+            grid-template-columns: 56px repeat(6, 1fr);
+            gap: 4px;
+        }
+
+        .grid-cell { padding: 0; }
+
+        .grid-cell.header {
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--sand);
+            padding: 12px 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .grid-cell.row-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--gold);
+            padding: 0 8px;
+        }
+
+        .grid-cell.block-cell {
+            aspect-ratio: 2.1;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 2px solid var(--border);
+            background: var(--bg-2);
+            color: transparent;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .grid-cell.block-cell:hover {
+            border-color: var(--gold);
+            transform: scale(1.03);
+            z-index: 1;
+        }
+
+        .grid-cell.block-cell.occupied {
+            border-color: transparent;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+
+        /* ── Comparison ── */
+        .comparison-header { margin-bottom: 16px; }
+        .comparison-header h3 { font-size: 1.15rem; margin-bottom: 4px; color: var(--sand); }
+        .comparison-header p { font-size: 0.85rem; color: var(--text-3); }
+
+        .comparison-summary {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .mini-stat {
+            padding: 10px 16px;
+            background: var(--bg-3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .mini-stat .v {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .mini-stat .l {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .comparison-legend {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: var(--text-2);
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 14px;
+            border-radius: 3px;
+            border: 2px solid;
+        }
+
+        .legend-color.t-100 { background: #6b7f45; border-color: #94ad63; }
+        .legend-color.t-75  { background: #7c6a3e; border-color: #b08d4e; }
+        .legend-color.t-50  { background: #4d3b27; border-color: #8a6d3f; }
+        .legend-color.t-25  { background: #3a2a1e; border-color: #a05138; }
+        .legend-color.t-0   { background: #2c1e17; border-color: var(--clay); }
+
+        .comparison-grid .grid-cell.block-cell { cursor: pointer; }
+
+        .cmp-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+        }
+
+        .cmp-cell .pct {
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+
+        .cmp-cell .cnt {
+            font-size: 0.62rem;
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .t-100 { background: #55693a; border-color: #94ad63; color: #f1f6e0; }
+        .t-75  { background: #6d5c33; border-color: #b08d4e; color: #f4ead0; }
+        .t-50  { background: #4a3822; border-color: #8a6d3f; color: #e7d5ae; }
+        .t-25  { background: #382719; border-color: #a05138; color: #e7c2a8; }
+        .t-0   { background: #2b1c14; border-color: #7a3222; color: #e58a6e; }
+
+        .t-0 .pct { color: var(--clay); }
+
+        /* ── Ranking ── */
+        .section-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--sand);
+            margin: 26px 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 6px;
+            height: 18px;
+            background: var(--terracotta);
+            border-radius: 3px;
+        }
+
+        .rank-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .rank-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 14px;
+            border-radius: 9px;
+            background: var(--bg-3);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .rank-row:hover { border-color: var(--gold); background: var(--bg-4); }
+        .rank-row.active { border-color: var(--gold); }
+
+        .rank-pos {
+            width: 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--gold);
+            flex-shrink: 0;
+        }
+
+        .rank-block {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            background: var(--bg);
+            border: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+
+        .rank-day {
+            font-weight: 600;
+            color: var(--text-2);
+            min-width: 72px;
+        }
+
+        .rank-fill {
+            flex: 1;
+            height: 10px;
+            background: var(--bg);
+            border-radius: 5px;
+            overflow: hidden;
+            min-width: 40px;
+        }
+
+        .rank-fill .inner {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.4s;
+        }
+
+        .rank-meta {
+            font-size: 0.82rem;
+            color: var(--text-3);
+            white-space: nowrap;
+            text-align: right;
+        }
+
+        .rank-meta b { color: var(--text-2); }
+
+        .rank-toggle {
+            margin-top: 10px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-3);
+            color: var(--text-2);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .rank-toggle:hover { background: var(--bg-4); color: var(--gold); }
+
+        /* ── Detail panel ── */
+        .detail-panel {
+            margin-top: 18px;
+            background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 18px;
+            display: none;
+        }
+
+        .detail-panel.visible { display: block; }
+
+        .detail-head {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .detail-head h4 {
+            font-size: 1.05rem;
+            color: var(--sand);
+        }
+
+        .detail-head .badge-pct {
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 1px solid;
+        }
+
+        .detail-close {
+            margin-left: auto;
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-3);
+            border-radius: 6px;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .detail-close:hover { color: var(--text); border-color: var(--text-3); }
+
+        .detail-filter {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-4);
+            color: var(--text);
+            width: 100%;
+            font-size: 0.85rem;
+        }
+
+        .detail-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .detail-col h5 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .detail-col h5 .count {
+            color: var(--text-3);
+            font-weight: 600;
+        }
+
+        .col-free h5 { color: var(--olive-soft); }
+        .col-busy h5 { color: var(--terracotta); }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        .chips::-webkit-scrollbar { width: 6px; }
+        .chips::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: var(--bg);
+            border: 1px solid var(--border-light);
+            color: var(--text-2);
+        }
+
+        .chip .flag { width: 20px; height: 14px; border-radius: 2px; }
+        .chip.small { font-size: 0.72rem; }
+
+        .chip-free { border-color: rgba(150,180,110,0.5); color: var(--olive-soft); }
+        .chip-busy { border-color: rgba(201,111,67,0.5); color: #e7b28f; }
+
+        .no-match {
+            font-size: 0.8rem;
+            color: var(--text-3);
+            padding: 8px 0;
+        }
+
+        /* ── Stats ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 14px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .stat-card {
+            background: var(--bg-3);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--sand);
+        }
+
+        .stat-card .stat-detail { font-size: 0.8rem; color: var(--text-3); margin-top: 4px; }
+
+        .panel-section {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .student-stat-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--bg-3);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .student-stat-row .name { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .student-stat-row .blocks-info { font-size: 0.8rem; color: var(--text-3); white-space: nowrap; }
+
+        .bar-container { width: 120px; height: 9px; background: var(--bg); border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 5px; transition: width 0.4s; }
+
+        .busy-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--bg-3);
+            border-radius: 10px;
+            margin-bottom: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .busy-row .d-block {
+            font-weight: 800;
+            color: var(--clay);
+            font-size: 0.9rem;
+            width: 130px;
+            flex-shrink: 0;
+        }
+
+        .busy-row .busy-count {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--terracotta);
+            min-width: 90px;
+        }
+
+        .busy-row .busy-names {
+            font-size: 0.8rem;
+            color: var(--text-3);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .country-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .country-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 26px;
+            background: var(--bg-3);
+            border: 1px solid var(--border-light);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-2);
+        }
+
+        .country-chip .country-count {
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 1px 9px;
+            font-size: 0.75rem;
+            color: var(--gold);
+        }
+
+        .day-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .day-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .day-bar-row .day-name {
+            width: 90px;
+            font-size: 0.82rem;
+            color: var(--text-2);
+            text-align: right;
+        }
+
+        .day-bar-row .bar-container { flex: 1; width: auto; height: 12px; }
+        .day-bar-row .bar-container .bar-fill { background: var(--terracotta); }
+        .day-bar-row .occupancy { width: 70px; font-size: 0.8rem; color: var(--text-2); font-weight: 700; }
+
+        /* ── Toast ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 10px;
+            background: var(--bg-4);
+            border: 1px solid var(--border-light);
+            color: var(--text);
+            font-size: 0.85rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s ease-out;
+            max-width: 340px;
+        }
+
+        .toast.error { border-color: var(--clay); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 960px) {
+            .main-layout { flex-direction: column; }
+            .sidebar { width: 100%; min-width: 100%; max-height: 300px; }
+            .student-list { display: flex; flex-wrap: wrap; gap: 4px; }
+            .student-card { flex: 0 0 auto; }
+            .detail-cols { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 620px) {
+            .tab-content { padding: 12px; }
+            header { padding: 14px 18px; }
+            .schedule-grid, .comparison-grid { grid-template-columns: 40px repeat(6, 1fr); gap: 2px; }
+            .grid-cell.header { font-size: 0.6rem; padding: 8px 2px; letter-spacing: 0; }
+            .grid-cell.row-header { font-size: 0.9rem; }
+            .grid-cell.block-cell { aspect-ratio: 1.4; font-size: 0.6rem; }
+            .cmp-cell .pct { font-size: 0.65rem; }
+            .cmp-cell .cnt { font-size: 0.54rem; }
+            .hint { display: none; }
+            .rank-day { min-width: 56px; }
+            .bar-container { width: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <svg class="brand-logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="30" fill="#35281a" stroke="#d9a441" stroke-width="2"/>
+            <circle cx="32" cy="32" r="22" fill="none" stroke="#4d3a26" stroke-width="1.5"/>
+            <ellipse cx="32" cy="32" rx="22" ry="9" fill="none" stroke="#c96f43" stroke-width="1.4"/>
+            <path d="M12 32h40" stroke="#c96f43" stroke-width="1.4" opacity="0.85"/>
+            <path d="M32 10c6 6 6 12 0 20-6 8-6 14 0 22M32 10c-6 6-6 12 0 20 6 8 6 14 0 22" stroke="#88a55a" stroke-width="1.4"/>
+            <circle cx="32" cy="32" r="5" fill="#d9a441"/>
+        </svg>
+        <div class="brand-text">
+            <h1><em>Yenapatur</em> Schedule</h1>
+            <p>Red internacional de intercambio · Gestión de horarios</p>
+        </div>
+    </div>
+    <div class="header-meta">
+        <span class="header-badge">
+            <svg class="globe-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/>
+            </svg>
+            <span id="headerCount">0 estudiantes</span>
+        </span>
+    </div>
+</header>
+
+<div class="main-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Estudiantes &amp; países</h2>
+            <div class="add-student-form">
+                <div class="row-form">
+                    <input type="text" id="studentNameInput" placeholder="Nombre del estudiante..." maxlength="40">
+                    <button class="add-btn" id="addStudentBtn" title="Agregar estudiante">+</button>
+                </div>
+                <select id="studentCountrySelect"></select>
+            </div>
+        </div>
+        <div class="student-list" id="studentList">
+            <div class="empty-state" id="emptyState">
+                <div class="icon">&#127757;</div>
+                <p>Agrega estudiantes de todo el mundo<br>para comenzar a asignar horarios</p>
+            </div>
+        </div>
+    </aside>
+
+    <div class="content">
+        <div class="tabs">
+            <div class="tab active" data-tab="schedule">Horarios</div>
+            <div class="tab" data-tab="compare">Comparar</div>
+            <div class="tab" data-tab="stats">Estadísticas</div>
+        </div>
+
+        <div class="tab-content">
+            <div class="tab-panel active" id="panel-schedule">
+                <div id="scheduleContent"></div>
+            </div>
+            <div class="tab-panel" id="panel-compare">
+                <div id="compareContent"></div>
+            </div>
+            <div class="tab-panel" id="panel-stats">
+                <div id="statsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ── Constantes ──
+    const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const DAY_KEYS = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
+    const BLOCKS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
+    const EARTH_COLORS = [
+        '#c96f43', '#88a55a', '#d9a441', '#b5804f', '#7fb5a0',
+        '#a0583f', '#8a6d3b', '#c08552', '#5f7f5f', '#b5634f',
+        '#8f5e2e', '#9f8574', '#d47a54', '#6b8e6b', '#c9965c',
+        '#776b93', '#a8814f', '#b08077', '#75967f', '#d8a35c'
+    ];
+
+    const COUNTRIES = [
+        { code: 'ar', name: 'Argentina' },
+        { code: 'bo', name: 'Bolivia' },
+        { code: 'br', name: 'Brasil' },
+        { code: 'cl', name: 'Chile' },
+        { code: 'co', name: 'Colombia' },
+        { code: 'cr', name: 'Costa Rica' },
+        { code: 'cu', name: 'Cuba' },
+        { code: 'do', name: 'República Dominicana' },
+        { code: 'ec', name: 'Ecuador' },
+        { code: 'sv', name: 'El Salvador' },
+        { code: 'gt', name: 'Guatemala' },
+        { code: 'hn', name: 'Honduras' },
+        { code: 'mx', name: 'México' },
+        { code: 'ni', name: 'Nicaragua' },
+        { code: 'pa', name: 'Panamá' },
+        { code: 'py', name: 'Paraguay' },
+        { code: 'pe', name: 'Perú' },
+        { code: 'pr', name: 'Puerto Rico' },
+        { code: 'uy', name: 'Uruguay' },
+        { code: 've', name: 'Venezuela' },
+        { code: 'es', name: 'España' },
+        { code: 'pt', name: 'Portugal' },
+        { code: 'fr', name: 'Francia' },
+        { code: 'it', name: 'Italia' },
+        { code: 'de', name: 'Alemania' },
+        { code: 'gb', name: 'Reino Unido' },
+        { code: 'ie', name: 'Irlanda' },
+        { code: 'nl', name: 'Países Bajos' },
+        { code: 'be', name: 'Bélgica' },
+        { code: 'ch', name: 'Suiza' },
+        { code: 'at', name: 'Austria' },
+        { code: 'se', name: 'Suecia' },
+        { code: 'no', name: 'Noruega' },
+        { code: 'fi', name: 'Finlandia' },
+        { code: 'dk', name: 'Dinamarca' },
+        { code: 'pl', name: 'Polonia' },
+        { code: 'cz', name: 'Chequia' },
+        { code: 'sk', name: 'Eslovaquia' },
+        { code: 'hu', name: 'Hungría' },
+        { code: 'ro', name: 'Rumania' },
+        { code: 'bg', name: 'Bulgaria' },
+        { code: 'gr', name: 'Grecia' },
+        { code: 'ru', name: 'Rusia' },
+        { code: 'ua', name: 'Ucrania' },
+        { code: 'tr', name: 'Turquía' },
+        { code: 'us', name: 'Estados Unidos' },
+        { code: 'ca', name: 'Canadá' },
+        { code: 'au', name: 'Australia' },
+        { code: 'nz', name: 'Nueva Zelanda' },
+        { code: 'cn', name: 'China' },
+        { code: 'jp', name: 'Japón' },
+        { code: 'kr', name: 'Corea del Sur' },
+        { code: 'in', name: 'India' },
+        { code: 'th', name: 'Tailandia' },
+        { code: 'vn', name: 'Vietnam' },
+        { code: 'ph', name: 'Filipinas' },
+        { code: 'id', name: 'Indonesia' },
+        { code: 'my', name: 'Malasia' },
+        { code: 'sg', name: 'Singapur' },
+        { code: 'tw', name: 'Taiwán' },
+        { code: 'eg', name: 'Egipto' },
+        { code: 'ma', name: 'Marruecos' },
+        { code: 'dz', name: 'Argelia' },
+        { code: 'za', name: 'Sudáfrica' },
+        { code: 'ng', name: 'Nigeria' },
+        { code: 'ke', name: 'Kenia' },
+        { code: 'et', name: 'Etiopía' },
+        { code: 'gh', name: 'Ghana' },
+        { code: 'sn', name: 'Senegal' },
+        { code: 'il', name: 'Israel' },
+        { code: 'jo', name: 'Jordania' },
+        { code: 'ae', name: 'Emiratos Árabes' },
+        { code: 'sa', name: 'Arabia Saudita' },
+        { code: 'qa', name: 'Catar' }
+    ];
+
+    // ── Estado ──
+    let students = [];
+    let selectedStudentId = null;
+    let nextId = 1;
+    let activeTab = 'schedule';
+    let compareSel = null;      // { dayKey, block }
+    let rankShowAll = false;
+    let detailFilter = '';
+
+    // ── DOM ──
+    const studentNameInput = document.getElementById('studentNameInput');
+    const studentCountrySelect = document.getElementById('studentCountrySelect');
+    const addStudentBtn = document.getElementById('addStudentBtn');
+    const studentListEl = document.getElementById('studentList');
+    const emptyState = document.getElementById('emptyState');
+    const scheduleContent = document.getElementById('scheduleContent');
+    const compareContent = document.getElementById('compareContent');
+    const statsContent = document.getElementById('statsContent');
+    const toastContainer = document.getElementById('toastContainer');
+    const headerCount = document.getElementById('headerCount');
+
+    // ── Utilidades ──
+    function escHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function getColor(idx) { return EARTH_COLORS[idx % EARTH_COLORS.length]; }
+    function getCountry(code) { return COUNTRIES.find(c => c.code === code) || null; }
+    function flagUrl(code, w) { return code ? 'https://flagcdn.com/w' + (w || 40) + '/' + code.toLowerCase() + '.png' : ''; }
+    function flagImg(code, w) {
+        if (!code) return '<span class="flag-placeholder">&#127757;</span>';
+        return '<img class="flag" src="' + flagUrl(code, w) + '" alt="" loading="lazy" onerror="this.outerHTML=\'<span class=&quot;flag-placeholder&quot;>&#127757;</span>\'">';
+    }
+
+    function countBlocks(s) {
+        let c = 0;
+        for (const d of DAY_KEYS) c += s.schedule[d].length;
+        return c;
+    }
+
+    function showToast(msg, isError) {
+        const t = document.createElement('div');
+        t.className = 'toast' + (isError ? ' error' : '');
+        t.textContent = msg;
+        toastContainer.appendChild(t);
+        setTimeout(() => { t.style.transition = 'opacity 0.3s'; t.style.opacity = '0'; }, 2200);
+        setTimeout(() => t.remove(), 2500);
+    }
+
+    // Poblar selector de países
+    (function buildCountrySelect() {
+        let html = '<option value="">&mdash; Seleccionar país &mdash;</option>';
+        COUNTRIES.forEach(c => { html += '<option value="' + c.code + '">' + c.name + '</option>'; });
+        studentCountrySelect.innerHTML = html;
+    })();
+
+    // ── Gestión de estudiantes ──
+    function addStudent(name, country) {
+        name = (name || '').trim();
+        if (!name) { showToast('Escribe un nombre', true); return; }
+        if (students.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+            showToast('Ya existe un estudiante con ese nombre', true); return;
+        }
+        const student = {
+            id: nextId++,
+            name: name,
+            country: country || '',
+            color: getColor(students.length),
+            schedule: {}
+        };
+        DAY_KEYS.forEach(d => student.schedule[d] = []);
+        students.push(student);
+        selectedStudentId = student.id;
+        studentNameInput.value = '';
+        studentCountrySelect.value = '';
+        render();
+        const c = getCountry(student.country);
+        showToast(name + ' agregado' + (c ? ' (' + c.name + ')' : ''));
+    }
+
+    function removeStudent(id) {
+        const s = students.find(x => x.id === id);
+        students = students.filter(x => x.id !== id);
+        if (selectedStudentId === id) selectedStudentId = students.length ? students[0].id : null;
+        render();
+        if (s) showToast(s.name + ' eliminado');
+    }
+
+    function toggleBlock(dayKey, block) {
+        const s = students.find(x => x.id === selectedStudentId);
+        if (!s) return;
+        const arr = s.schedule[dayKey];
+        const idx = arr.indexOf(block);
+        if (idx >= 0) arr.splice(idx, 1);
+        else arr.push(block);
+        render();
+    }
+
+    function setStudentCountry(id, code) {
+        const s = students.find(x => x.id === id);
+        if (s) { s.country = code; render(); }
+    }
+
+    // ── Tabs ──
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            activeTab = tab.dataset.tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('panel-' + activeTab).classList.add('active');
+            render();
+        });
+    });
+
+    addStudentBtn.addEventListener('click', () => addStudent(studentNameInput.value, studentCountrySelect.value));
+    studentNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(studentNameInput.value, studentCountrySelect.value); });
+
+    // ── Render maestro ──
+    function render() {
+        headerCount.textContent = students.length + ' estudiante' + (students.length === 1 ? '' : 's');
+        renderStudentList();
+        if (activeTab === 'schedule') renderSchedule();
+        else if (activeTab === 'compare') renderCompare();
+        else renderStats();
+    }
+
+    function renderStudentList() {
+        if (!students.length) {
+            studentListEl.innerHTML = '';
+            studentListEl.appendChild(emptyState);
+            emptyState.style.display = '';
+            return;
+        }
+        emptyState.style.display = 'none';
+        let html = '';
+        students.forEach(s => {
+            const bc = countBlocks(s);
+            const sel = s.id === selectedStudentId ? ' selected' : '';
+            html += '<div class="student-card' + sel + '" data-id="' + s.id + '">'
+                + '<span class="color-dot" style="background:' + s.color + '"></span>'
+                + flagImg(s.country)
+                + '<span class="student-name">' + escHtml(s.name) + '</span>'
+                + '<span class="student-blocks">' + bc + '</span>'
+                + '<button class="delete-btn" data-del="' + s.id + '" title="Eliminar">&times;</button>'
+                + '</div>';
+        });
+        studentListEl.innerHTML = html;
+        studentListEl.querySelectorAll('.student-card').forEach(card => {
+            card.addEventListener('click', e => {
+                if (e.target.closest('.delete-btn')) return;
+                selectedStudentId = parseInt(card.dataset.id);
+                render();
+            });
+        });
+        studentListEl.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                removeStudent(parseInt(btn.dataset.del));
+            });
+        });
+    }
+
+    // ── Vista Horarios ──
+    function renderSchedule() {
+        const s = students.find(x => x.id === selectedStudentId);
+        if (!s) {
+            scheduleContent.innerHTML = '<div class="no-data"><div class="icon">&#128100;</div>'
+                + '<h3>Selecciona un estudiante</h3>'
+                + '<p>Agrega y selecciona un estudiante en la barra lateral<br>para asignar sus bloques de clase.</p></div>';
+            return;
+        }
+
+        let countryOpts = '<option value="">&mdash; País &mdash;</option>';
+        COUNTRIES.forEach(c => {
+            const sel = c.code === s.country ? ' selected' : '';
+            countryOpts += '<option value="' + c.code + '"' + sel + '>' + c.name + '</option>';
+        });
+
+        let html = '<div class="schedule-wrapper">'
+            + '<div class="schedule-header">'
+            + '<div class="current-student">'
+            + '<span class="color-dot" style="background:' + s.color + '"></span>'
+            + flagImg(s.country, 40)
+            + escHtml(s.name)
+            + '<select data-country="' + s.id + '">' + countryOpts + '</select>'
+            + '</div>'
+            + '<span class="hint">Clic en una celda = asignar / quitar bloque</span>'
+            + '</div>'
+            + '<div class="schedule-grid">';
+
+        html += '<div class="grid-cell header"></div>';
+        DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
+
+        BLOCKS.forEach(block => {
+            html += '<div class="grid-cell row-header">' + block + '</div>';
+            DAY_KEYS.forEach(dk => {
+                const occ = s.schedule[dk].includes(block);
+                const cls = occ ? ' block-cell occupied' : ' block-cell';
+                const bg = occ ? 'background:' + s.color + ';' : '';
+                html += '<div class="grid-cell' + cls + '" data-day="' + dk + '" data-block="' + block + '"'
+                    + ' style="' + bg + '">' + (occ ? '&#10003;' : '') + '</div>';
+            });
+        });
+
+        html += '</div></div>';
+        scheduleContent.innerHTML = html;
+
+        scheduleContent.querySelectorAll('.block-cell').forEach(cell => {
+            cell.addEventListener('click', () => toggleBlock(cell.dataset.day, cell.dataset.block));
+        });
+
+        const countrySel = scheduleContent.querySelector('[data-country]');
+        if (countrySel) {
+            countrySel.addEventListener('change', () => setStudentCountry(countrySel.dataset.country, countrySel.value));
+        }
+    }
+
+    // ── Comparación ──
+    function buildAvailability() {
+        const avail = {};
+        DAY_KEYS.forEach((dk, di) => {
+            avail[dk] = { dayIdx: di };
+            BLOCKS.forEach(b => {
+                const free = [], occ = [];
+                students.forEach(s => {
+                    if (s.schedule[dk].includes(b)) occ.push(s); else free.push(s);
+                });
+                const pct = students.length ? Math.round((free.length / students.length) * 100) : 0;
+                avail[dk][b] = { free: free, occ: occ, pct: pct, n: free.length };
+            });
+        });
+        return avail;
+    }
+
+    function tierClass(pct) {
+        if (pct === 100) return 't-100';
+        if (pct >= 75) return 't-75';
+        if (pct >= 50) return 't-50';
+        if (pct >= 25) return 't-25';
+        return 't-0';
+    }
+
+    function renderCompare() {
+        if (students.length < 2) {
+            compareContent.innerHTML = '<div class="no-data"><div class="icon">&#9878;</div>'
+                + '<h3>Necesitas al menos 2 estudiantes</h3>'
+                + '<p>Agrega al menos 2 estudiantes con horarios asignados<br>para poder comparar disponibilidad.</p></div>';
+            return;
+        }
+
+        const avail = buildAvailability();
+        const totalCells = BLOCKS.length * DAY_KEYS.length;
+        let cells100 = 0;
+        let totalFree = 0;
+        DAY_KEYS.forEach(dk => {
+            BLOCKS.forEach(b => {
+                const a = avail[dk][b];
+                if (a.pct === 100) cells100++;
+                totalFree += a.n;
+            });
+        });
+        const avg = Math.round(totalFree / totalCells);
+
+        let html = '<div class="schedule-wrapper">'
+            + '<div class="comparison-header">'
+            + '<h3>Comparación de disponibilidad conjunta</h3>'
+            + '<p>' + students.length + ' estudiantes comparados &middot; haz clic en cualquier bloque para ver quién está ocupado o libre</p>'
+            + '</div>'
+            + '<div class="comparison-summary">'
+            + '<div class="mini-stat"><div class="v">' + cells100 + '</div><div class="l">bloques 100% libres</div></div>'
+            + '<div class="mini-stat"><div class="v">' + avg + '%</div><div class="l">disponibilidad media</div></div>'
+            + '<div class="mini-stat"><div class="v">' + students.length + '</div><div class="l">estudiantes</div></div>'
+            + '</div>';
+
+        // Matriz de disponibilidad
+        html += '<div class="comparison-legend">'
+            + '<div class="legend-item"><span class="legend-color t-100"></span>100% libre</div>'
+            + '<div class="legend-item"><span class="legend-color t-75"></span>75&ndash;99%</div>'
+            + '<div class="legend-item"><span class="legend-color t-50"></span>50&ndash;74%</div>'
+            + '<div class="legend-item"><span class="legend-color t-25"></span>25&ndash;49%</div>'
+            + '<div class="legend-item"><span class="legend-color t-0"></span>0&ndash;24%</div>'
+            + '</div>';
+
+        html += '<div class="comparison-grid">';
+        html += '<div class="grid-cell header"></div>';
+        DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
+
+        BLOCKS.forEach(block => {
+            html += '<div class="grid-cell row-header">' + block + '</div>';
+            DAY_KEYS.forEach(dk => {
+                const a = avail[dk][block];
+                const cls = tierClass(a.pct);
+                const isSel = compareSel && compareSel.dayKey === dk && compareSel.block === block ? ' active' : '';
+                html += '<div class="grid-cell block-cell cmp-cell ' + cls + isSel + '" data-day="' + dk + '" data-block="' + block + '">'
+                    + '<span class="pct">' + a.pct + '%</span>'
+                    + '<span class="cnt">' + a.n + ' libres</span>'
+                    + '</div>';
+            });
+        });
+        html += '</div>';
+
+        // Ranking de horarios más liberados
+        const items = [];
+        DAY_KEYS.forEach(dk => {
+            BLOCKS.forEach(b => {
+                const a = avail[dk][b];
+                items.push({ dk: dk, dayIdx: avail[dk].dayIdx, block: b, pct: a.pct, n: a.n, occ: a.occ.length });
+            });
+        });
+        items.sort((x, y) => y.pct - x.pct || x.dayIdx - y.dayIdx || BLOCKS.indexOf(x.block) - BLOCKS.indexOf(y.block));
+
+        const visible = rankShowAll ? items : items.filter(i => i.pct >= 75);
+        const hiddenCount = items.length - visible.length;
+
+        html += '<div class="section-title">Horarios más liberados</div>';
+        html += '<div class="rank-list" id="rankList">';
+        items.forEach((it, idx) => {
+            if (!rankShowAll && it.pct < 75) return;
+            const isSel = compareSel && compareSel.dayKey === it.dk && compareSel.block === it.block ? ' active' : '';
+            const fillColor = it.pct === 100 ? '#88a55a' : it.pct >= 50 ? '#c08552' : '#a85138';
+            html += '<div class="rank-row' + isSel + '" data-day="' + it.dk + '" data-block="' + it.block + '">'
+                + '<span class="rank-pos">' + (idx + 1) + '</span>'
+                + '<span class="rank-block">' + it.block + '</span>'
+                + '<span class="rank-day">' + DAYS[it.dayIdx] + '</span>'
+                + '<span class="rank-fill"><span class="inner" style="width:' + it.pct + '%;background:' + fillColor + '"></span></span>'
+                + '<span class="rank-meta"><b>' + it.pct + '%</b> &middot; ' + it.n + ' libres</span>'
+                + '</div>';
+        });
+        html += '</div>';
+        if (!rankShowAll && hiddenCount > 0) {
+            html += '<button class="rank-toggle" id="rankToggle">Mostrar ' + hiddenCount + ' bloques más (' + items.length + ' en total)</button>';
+        } else if (rankShowAll) {
+            html += '<button class="rank-toggle" id="rankToggle">Mostrar solo bloques con &ge; 75% de disponibilidad</button>';
+        }
+
+        // Panel de detalle
+        html += '<div class="detail-panel' + (compareSel ? ' visible' : '') + '" id="detailPanel">';
+        if (compareSel) {
+            const a = avail[compareSel.dayKey][compareSel.block];
+            html += detailHtml(compareSel.dayKey, compareSel.block, a);
+        }
+        html += '</div>';
+
+        html += '</div>';
+        compareContent.innerHTML = html;
+
+        // Eventos
+        compareContent.querySelectorAll('.comparison-grid .block-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                compareSel = { dayKey: cell.dataset.day, block: cell.dataset.block };
+                renderCompare();
+            });
+        });
+        compareContent.querySelectorAll('.rank-row').forEach(row => {
+            row.addEventListener('click', () => {
+                compareSel = { dayKey: row.dataset.day, block: row.dataset.block };
+                renderCompare();
+            });
+        });
+        const rt = document.getElementById('rankToggle');
+        if (rt) rt.addEventListener('click', () => { rankShowAll = !rankShowAll; renderCompare(); });
+        const dc = document.getElementById('detailClose');
+        if (dc) dc.addEventListener('click', () => { compareSel = null; renderCompare(); });
+        const df = document.getElementById('detailFilter');
+        if (df) df.addEventListener('input', e => { detailFilter = e.target.value; renderDetailFilter(); });
+    }
+
+    function detailHtml(dk, block, a) {
+        const dayName = DAYS[availDayIdx(dk)];
+        let badgeCls = tierClass(a.pct);
+        let html = '<div class="detail-head">'
+            + '<h4>Bloque ' + block + ' &middot; ' + dayName + '</h4>'
+            + '<span class="badge-pct ' + badgeCls + '">' + a.pct + '% libre</span>'
+            + '<button class="detail-close" id="detailClose">&times; cerrar</button>'
+            + '</div>'
+            + '<input type="text" class="detail-filter" id="detailFilter" placeholder="Filtrar por nombre o país..." value="' + escHtml(detailFilter) + '">'
+            + '<div class="detail-cols">'
+            + '<div class="detail-col col-free"><h5>Libres <span class="count">(' + a.free.length + ')</span></h5><div class="chips" id="chipsFree">'
+            + chipsHtml(a.free, 'chip-free') + '</div></div>'
+            + '<div class="detail-col col-busy"><h5>Ocupados <span class="count">(' + a.occ.length + ')</span></h5><div class="chips" id="chipsBusy">'
+            + chipsHtml(a.occ, 'chip-busy') + '</div></div>'
+            + '</div>';
+        return html;
+    }
+
+    function availDayIdx(dk) { return DAY_KEYS.indexOf(dk); }
+
+    function chipsHtml(list, cls) {
+        if (!list.length) return '<span class="no-match">Nadie</span>';
+        let html = '';
+        list.forEach(s => {
+            const c = getCountry(s.country);
+            const cntry = c ? ' &middot; ' + c.name : '';
+            html += '<span class="chip ' + cls + '">' + flagImg(s.country, 20)
+                + s.name + '</span>';
+        });
+        return html;
+    }
+
+    function renderDetailFilter() {
+        const panel = document.getElementById('detailPanel');
+        const chipsF = document.getElementById('chipsFree');
+        const chipsB = document.getElementById('chipsBusy');
+        if (!panel || !chipsF || !chipsB) return;
+        const a = buildAvailability();
+        const cell = a[compareSel.dayKey][compareSel.block];
+        const q = detailFilter.toLowerCase();
+        chipsF.innerHTML = chipsHtml(cell.free.filter(s => filterMatch(s, q)), 'chip-free');
+        chipsB.innerHTML = chipsHtml(cell.occ.filter(s => filterMatch(s, q)), 'chip-busy');
+    }
+
+    function filterMatch(s, q) {
+        if (!q) return true;
+        if (s.name.toLowerCase().includes(q)) return true;
+        const c = getCountry(s.country);
+        return c && c.name.toLowerCase().includes(q);
+    }
+
+    // ── Estadísticas ──
+    function renderStats() {
+        if (!students.length) {
+            statsContent.innerHTML = '<div class="no-data"><div class="icon">&#10024;</div>'
+                + '<h3>Sin datos</h3>'
+                + '<p>Agrega estudiantes para ver estadísticas<br>de carga horaria y diversidad internacional.</p></div>';
+            return;
+        }
+
+        const totalSlots = BLOCKS.length * DAY_KEYS.length;
+        let totalAssigned = 0;
+        const countryCount = {};
+        students.forEach(s => {
+            totalAssigned += countBlocks(s);
+            if (s.country) countryCount[s.country] = (countryCount[s.country] || 0) + 1;
+        });
+
+        const avail = buildAvailability();
+        let cells100 = 0;
+        let dailyOcc = {};
+        DAY_KEYS.forEach(dk => {
+            let dayOcc = 0;
+            BLOCKS.forEach(b => {
+                if (avail[dk][b].pct === 100) cells100++;
+                dayOcc += avail[dk][b].occ.length;
+            });
+            dailyOcc[dk] = Math.round((dayOcc / (students.length * BLOCKS.length)) * 100);
+        });
+
+        let html = '<div class="stats-grid">'
+            + '<div class="stat-card"><div class="stat-label">Estudiantes</div><div class="stat-value">' + students.length + '</div>'
+            + '<div class="stat-detail">en el comparador</div></div>'
+            + '<div class="stat-card"><div class="stat-label">Países representados</div><div class="stat-value" style="color:var(--gold)">' + Object.keys(countryCount).length + '</div>'
+            + '<div class="stat-detail">de todo el mundo</div></div>'
+            + '<div class="stat-card"><div class="stat-label">Bloques 100% libres</div><div class="stat-value" style="color:var(--olive)">' + cells100 + '</div>'
+            + '<div class="stat-detail">de ' + totalSlots + ' bloques posibles</div></div>'
+            + '<div class="stat-card"><div class="stat-label">Carga total asignada</div><div class="stat-value">' + totalAssigned + '</div>'
+            + '<div class="stat-detail">bloques ocupados en total</div></div>'
+            + '</div>';
+
+        // Carga por estudiante
+        html += '<div class="panel-section">';
+        html += '<div class="section-title">Carga por estudiante <span style="font-weight:500;color:var(--text-3);font-size:0.85rem">(' + totalSlots + ' bloques posibles cada uno)</span></div>';
+        const sorted = students.slice().sort((a, b) => countBlocks(b) - countBlocks(a));
+        sorted.forEach(s => {
+            const bc = countBlocks(s);
+            const pct = Math.round((bc / totalSlots) * 100);
+            html += '<div class="student-stat-row">'
+                + '<span class="color-dot" style="background:' + s.color + '"></span>'
+                + flagImg(s.country, 20)
+                + '<span class="name">' + escHtml(s.name) + '</span>'
+                + '<span class="blocks-info">' + bc + ' bloques (' + pct + '%)</span>'
+                + '<div class="bar-container"><div class="bar-fill" style="width:' + pct + '%;background:' + s.color + '"></div></div>'
+                + '</div>';
+        });
+        html += '</div>';
+
+        // Ocupación por día
+        const daySorted = Object.keys(dailyOcc).sort((a, b) => dailyOcc[b] - dailyOcc[a]);
+        html += '<div class="panel-section">';
+        html += '<div class="section-title">Ocupación promedio por día</div>';
+        html += '<div class="day-bars">';
+        daySorted.forEach(dk => {
+            const occ = dailyOcc[dk];
+            html += '<div class="day-bar-row">'
+                + '<span class="day-name">' + DAYS[availDayIdx(dk)] + '</span>'
+                + '<div class="bar-container"><div class="bar-fill" style="width:' + occ + '%;background:' + (occ >= 40 ? '#c2452e' : occ >= 20 ? '#c96f43' : '#88a55a') + '"></div></div>'
+                + '<span class="occupancy">' + (students.length ? Math.round(occ) : 0) + '%</span>'
+                + '</div>';
+        });
+        html += '</div></div>';
+
+        // Bloques más cargados (quién está ocupado)
+        const hotItems = [];
+        DAY_KEYS.forEach(dk => {
+            BLOCKS.forEach(b => {
+                const a = avail[dk][b];
+                if (a.occ.length > 0) hotItems.push({ dk, block: b, occ: a.occ });
+            });
+        });
+        hotItems.sort((x, y) => y.occ.length - x.occ.length);
+        const top = hotItems.slice(0, 14);
+
+        html += '<div class="panel-section">';
+        html += '<div class="section-title">Bloques más congestionados &middot; quién está ocupado</div>';
+        if (!top.length) {
+            html += '<div class="no-data" style="padding:20px"><p>Nadie tiene bloques asignados todavía.</p></div>';
+        }
+        top.forEach(it => {
+            const names = it.occ.slice(0, 4).map(s => s.name).join(', ') + (it.occ.length > 4 ? ' y ' + (it.occ.length - 4) + ' más' : '');
+            html += '<div class="busy-row">'
+                + '<span class="d-block">' + DAYS[availDayIdx(it.dk)] + ' &middot; ' + it.block + '</span>'
+                + '<span class="busy-count">' + it.occ.length + ' ocupados</span>'
+                + '<span class="busy-names">' + escHtml(names) + '</span>'
+                + '</div>';
+        });
+        html += '</div>';
+
+        // Países
+        html += '<div class="panel-section">';
+        html += '<div class="section-title">Diversidad internacional</div>';
+        const countriesSorted = Object.keys(countryCount).sort((a, b) => countryCount[b] - countryCount[a]);
+        html += '<div class="country-chips">';
+        countriesSorted.forEach(code => {
+            const c = getCountry(code);
+            if (!c) return;
+            html += '<div class="country-chip">' + flagImg(code, 40) + '' + c.name
+                + '<span class="country-count">' + countryCount[code] + '</span></div>';
+        });
+        html += '</div></div>';
+
+        statsContent.innerHTML = html;
+    }
+
+    // ── Init ──
+    render();
+})();
+</script>
+
+</body>
+</html>
