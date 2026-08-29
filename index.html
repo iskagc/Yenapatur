@@ -1164,6 +1164,78 @@
             cursor: pointer;
         }
 
+        .confirm-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(13,9,5,0.62);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3500;
+            padding: 20px;
+        }
+
+        .confirm-modal.visible { display: flex; }
+
+        .confirm-box {
+            width: 100%;
+            max-width: 430px;
+            background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.55);
+        }
+
+        .confirm-box h4 {
+            font-size: 1.05rem;
+            color: var(--gold);
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .confirm-box p {
+            font-size: 0.9rem;
+            color: var(--text-2);
+            line-height: 1.5;
+            margin-bottom: 18px;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .confirm-actions button {
+            padding: 10px 18px;
+            border-radius: 9px;
+            border: none;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .confirm-cancel {
+            background: var(--bg-4);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+        }
+
+        .confirm-cancel:hover { color: var(--text); border-color: var(--text-3); }
+
+        .confirm-ok {
+            background: var(--terracotta);
+            color: #2a180c;
+        }
+
+        .confirm-ok:hover { background: var(--gold); }
+
+        .confirm-ok.danger { background: var(--clay); color: #fff; }
+        .confirm-ok.danger:hover { background: #d4583f; }
+
         /* ── Responsive ── */
         @media (max-width: 960px) {
             .main-layout { flex-direction: column; }
@@ -1298,6 +1370,17 @@
             <input type="password" id="adminPassInput" placeholder="Contraseña" autocomplete="current-password">
             <button class="gate-btn primary" id="adminLoginBtn">Iniciar sesión</button>
             <span class="gate-error" id="authError"></span>
+        </div>
+    </div>
+</div>
+
+<div class="confirm-modal" id="confirmModal">
+    <div class="confirm-box">
+        <h4>Confirmar cambio</h4>
+        <p id="confirmMsg"></p>
+        <div class="confirm-actions">
+            <button class="confirm-cancel" id="confirmCancel">Cancelar</button>
+            <button class="confirm-ok" id="confirmOk">Confirmar</button>
         </div>
     </div>
 </div>
@@ -1446,6 +1529,10 @@
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const authError = document.getElementById('authError');
     const signOutBtn = document.getElementById('signOutBtn');
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmMsg = document.getElementById('confirmMsg');
+    const confirmOkBtn = document.getElementById('confirmOk');
+    const confirmCancelBtn = document.getElementById('confirmCancel');
 
     // ── Utilidades ──
     function escHtml(s) {
@@ -1631,42 +1718,12 @@
 
     function loadGuest(uid) {
         guestUid = uid;
-        db.collection('students').doc(uid).get()
-            .then(docSnap => {
-                if (docSnap.exists) {
-                    const d = docSnap.data();
-                    const sc = d.schedule || {};
-                    DAY_KEYS.forEach(dk => { if (!sc[dk]) sc[dk] = []; });
-                    guestDoc = {
-                        id: uid,
-                        name: d.name || '',
-                        country: d.country || '',
-                        color: d.color || '#c96f43',
-                        schedule: sc
-                    };
-                    setSync('synced');
-                    const selectedC = guestCountrySelect.value;
-                    const upd = {};
-                    if (pendingGuestName && pendingGuestName !== guestDoc.name) upd.name = pendingGuestName;
-                    if (selectedC !== '' && selectedC !== guestDoc.country) upd.country = selectedC;
-                    pendingGuestName = '';
-                    if (Object.keys(upd).length) {
-                        db.collection('students').doc(uid).update(upd)
-                            .then(() => {
-                                if (upd.name) guestDoc.name = upd.name;
-                                if (upd.country) guestDoc.country = upd.country;
-                                renderGuest();
-                            })
-                            .catch(() => {
-                                if (upd.name) guestDoc.name = upd.name;
-                                if (upd.country) guestDoc.country = upd.country;
-                                renderGuest();
-                            });
-                    } else {
-                        renderGuest();
-                    }
+        db.collection('students').where('owner', '==', uid).limit(1).get()
+            .then(qs => {
+                if (!qs.empty) {
+                    hydrateGuest(qs.docs[0].id, qs.docs[0].data());
                 } else if (pendingGuestName) {
-                    createGuest(uid, pendingGuestName);
+                    registerGuest(pendingGuestName, guestCountrySelect.value || '');
                 } else {
                     showToast('Escribe tu nombre para ingresar', true);
                     auth.signOut();
@@ -1678,34 +1735,79 @@
             });
     }
 
-    function createGuest(uid, name) {
-        const doc = {
-            name: name,
-            country: guestCountrySelect.value || '',
-            color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
-            schedule: {},
-            owner: uid,
-            createdAt: new Date()
+    function hydrateGuest(id, d) {
+        const sc = d.schedule || {};
+        DAY_KEYS.forEach(dk => { if (!sc[dk]) sc[dk] = []; });
+        guestDoc = {
+            id: id,
+            name: d.name || '',
+            country: d.country || '',
+            color: d.color || '#c96f43',
+            schedule: sc
         };
-        DAY_KEYS.forEach(d => doc.schedule[d] = []);
-        db.collection('students').doc(uid).set(doc)
-            .then(() => {
-                guestDoc = { id: uid, name: name, country: '', color: doc.color, schedule: doc.schedule };
-                pendingGuestName = '';
-                setSync('synced');
-                showToast('Bienvenido/a, ' + name);
-                renderGuest();
-            })
-            .catch(err => {
-                showToast('No se pudo guardar tu información: ' + friendlyError(err), true);
-            });
+        pendingGuestName = '';
+        setSync('synced');
+        renderGuest();
+    }
+
+    function registerGuest(name, country) {
+        const slug = makeSlug(name, country);
+        const ref = db.collection('students').doc(slug);
+        ref.get().then(docSnap => {
+            if (docSnap.exists) {
+                if (docSnap.data().owner === currentUser.uid) {
+                    hydrateGuest(slug, docSnap.data());
+                } else {
+                    duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
+                }
+            } else {
+                const doc = {
+                    name: name,
+                    country: country,
+                    color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+                    schedule: {},
+                    owner: currentUser.uid,
+                    key: slug,
+                    createdAt: new Date()
+                };
+                DAY_KEYS.forEach(d => doc.schedule[d] = []);
+                ref.set(doc)
+                    .then(() => {
+                        guestDoc = {
+                            id: slug,
+                            name: name,
+                            country: country,
+                            color: doc.color,
+                            schedule: doc.schedule
+                        };
+                        pendingGuestName = '';
+                        setSync('synced');
+                        showToast('Bienvenido/a, ' + name);
+                        renderGuest();
+                    })
+                    .catch(err => {
+                        if (err && err.code === 'permission-denied') {
+                            duplicateError('Ya existe una entrada con el nombre "' + name + '" y ese país. Por privacidad solo se permite una vez.');
+                        } else {
+                            showToast('No se pudo guardar tu información: ' + friendlyError(err), true);
+                        }
+                    });
+            }
+        }).catch(err => {
+            showToast('No se pudo ingresar: ' + friendlyError(err), true);
+        });
+    }
+
+    function duplicateError(msg) {
+        guestError.textContent = msg;
+        auth.signOut();
     }
 
     function toggleGuestBlock(dayKey, block) {
         if (!guestDoc) return;
         const occupied = guestDoc.schedule[dayKey].includes(block);
         const fv = firebase.firestore.FieldValue;
-        db.collection('students').doc(guestUid).update({
+        db.collection('students').doc(guestDoc.id).update({
             ['schedule.' + dayKey]: occupied ? fv.arrayRemove(block) : fv.arrayUnion(block)
         }).then(() => {
             if (occupied) guestDoc.schedule[dayKey] = guestDoc.schedule[dayKey].filter(x => x !== block);
@@ -1764,7 +1866,7 @@
 
     function setGuestCountry(code) {
         if (!guestDoc) return;
-        db.collection('students').doc(guestUid).update({ country: code })
+        db.collection('students').doc(guestDoc.id).update({ country: code })
             .then(() => {
                 guestDoc.country = code;
                 showToast('País actualizado');
@@ -1776,25 +1878,42 @@
     }
 
     // ── Gestión de estudiantes (escrituras en Firestore) ──
+    function makeSlug(name, country) {
+        const base = name + '__' + (country || 'xx');
+        return base.toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+    }
+
     function addStudent(name, country) {
         name = (name || '').trim();
         if (!name) { showToast('Escribe un nombre', true); return; }
-        if (students.some(s => s.name.toLowerCase() === name.toLowerCase())) {
-            showToast('Ya existe un estudiante con ese nombre', true); return;
-        }
-        const doc = {
-            name: name,
-            country: country || '',
-            color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
-            schedule: {},
-            createdAt: new Date()
-        };
-        DAY_KEYS.forEach(d => doc.schedule[d] = []);
-        db.collection('students').add(doc).then(ref => {
-            selectedStudentId = ref.id;
+        const slug = makeSlug(name, country || '');
+        const ref = db.collection('students').doc(slug);
+        ref.get().then(docSnap => {
+            if (docSnap.exists) {
+                const existing = docSnap.data().name || 'Un registro';
+                showToast('Ya existe "' + existing + '" con ese nombre y país', true);
+                return false;
+            }
+            const doc = {
+                name: name,
+                country: country || '',
+                color: EARTH_COLORS[Math.floor(Math.random() * EARTH_COLORS.length)],
+                schedule: {},
+                key: slug,
+                createdAt: new Date()
+            };
+            DAY_KEYS.forEach(d => doc.schedule[d] = []);
+            return ref.set(doc);
+        }).then(res => {
+            if (res === false) return;
+            selectedStudentId = slug;
             studentNameInput.value = '';
             studentCountrySelect.value = '';
-            const c = getCountry(doc.country);
+            const c = getCountry(country);
             showToast(name + ' agregado' + (c ? ' (' + c.name + ')' : ''));
         }).catch(err => {
             showToast('No se pudo agregar: ' + friendlyError(err), true);
@@ -1902,6 +2021,55 @@
         auth.signOut().catch(() => {});
     });
 
+    // ── Ventana de confirmación (admin) ──
+    let confirmCallback = null;
+    let confirmCancelCallback = null;
+
+    function askConfirm(message, cb, opts) {
+        opts = opts || {};
+        confirmMsg.textContent = message;
+        confirmOkBtn.textContent = opts.okText || 'Confirmar';
+        confirmOkBtn.classList.toggle('danger', !!opts.danger);
+        confirmCallback = cb;
+        confirmCancelCallback = opts.onCancel || null;
+        confirmModal.classList.add('visible');
+        confirmOkBtn.focus();
+    }
+
+    function closeConfirm() {
+        confirmModal.classList.remove('visible');
+        confirmCallback = null;
+        confirmCancelCallback = null;
+    }
+
+    confirmOkBtn.addEventListener('click', () => {
+        const cb = confirmCallback;
+        closeConfirm();
+        if (cb) cb();
+    });
+
+    confirmCancelBtn.addEventListener('click', () => {
+        const cb = confirmCancelCallback;
+        closeConfirm();
+        if (cb) cb();
+    });
+
+    confirmModal.addEventListener('click', e => {
+        if (e.target === confirmModal) {
+            const cb = confirmCancelCallback;
+            closeConfirm();
+            if (cb) cb();
+        }
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && confirmModal.classList.contains('visible')) {
+            const cb = confirmCancelCallback;
+            closeConfirm();
+            if (cb) cb();
+        }
+    });
+
     // ── Render maestro ──
     function render() {
         headerCount.textContent = students.length + ' estudiante' + (students.length === 1 ? '' : 's');
@@ -1956,7 +2124,12 @@
         studentListEl.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', e => {
                 e.stopPropagation();
-                removeStudent(btn.dataset.del);
+                const s = students.find(x => x.id === btn.dataset.del);
+                askConfirm(
+                    '¿Seguro que quieres eliminar a "' + (s ? s.name : 'este estudiante') + '"? Esta acción no se puede deshacer.',
+                    () => removeStudent(btn.dataset.del),
+                    { danger: true, okText: 'Eliminar' }
+                );
             });
         });
     }
@@ -2007,12 +2180,31 @@
         scheduleContent.innerHTML = html;
 
         scheduleContent.querySelectorAll('.block-cell').forEach(cell => {
-            cell.addEventListener('click', () => toggleBlock(cell.dataset.day, cell.dataset.block));
+            cell.addEventListener('click', () => {
+                const dk = cell.dataset.day;
+                const b = cell.dataset.block;
+                const occ = s.schedule[dk].includes(b);
+                const dayName = DAYS[availDayIdx(dk)];
+                askConfirm(
+                    (occ ? '¿Quitar el bloque ' : '¿Asignar el bloque ') + b + ' a "' + s.name + '" (' + dayName + ')?',
+                    () => toggleBlock(dk, b)
+                );
+            });
         });
 
         const countrySel = scheduleContent.querySelector('[data-country]');
         if (countrySel) {
-            countrySel.addEventListener('change', () => setStudentCountry(countrySel.dataset.country, countrySel.value));
+            countrySel.addEventListener('change', () => {
+                const newCountry = countrySel.value;
+                if (newCountry === s.country) return;
+                const oldC = getCountry(s.country);
+                const newC = getCountry(newCountry);
+                askConfirm(
+                    '¿Cambiar el país de "' + s.name + '" de ' + (oldC ? oldC.name : 'sin definir') + ' a ' + (newC ? newC.name : 'sin definir') + '?',
+                    () => setStudentCountry(countrySel.dataset.country, newCountry),
+                    { onCancel: () => render() }
+                );
+            });
         }
     }
 
