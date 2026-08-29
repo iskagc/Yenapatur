@@ -928,7 +928,7 @@
             position: fixed;
             bottom: 24px;
             right: 24px;
-            z-index: 1000;
+            z-index: 3000;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -1265,6 +1265,7 @@
             <p class="gate-desc">Ingresa tu nombre y marca los bloques de tu horario. No necesitas cuenta: tus datos quedan protegidos.</p>
             <input type="text" id="guestNameInput" placeholder="Tu nombre..." maxlength="40">
             <button class="gate-btn primary" id="guestEnterBtn">Entrar con mi horario</button>
+            <span class="gate-error" id="guestError"></span>
         </div>
         <div class="gate-panel hidden" id="gateAdmin">
             <p class="gate-desc">Acceso exclusivo del equipo organizador.</p>
@@ -1413,6 +1414,7 @@
     const gateVisitPanel = document.getElementById('gateVisit');
     const guestNameInput = document.getElementById('guestNameInput');
     const guestEnterBtn = document.getElementById('guestEnterBtn');
+    const guestError = document.getElementById('guestError');
     const adminEmailInput = document.getElementById('adminEmailInput');
     const adminPassInput = document.getElementById('adminPassInput');
     const adminLoginBtn = document.getElementById('adminLoginBtn');
@@ -1790,6 +1792,10 @@
         if (code === 'auth/network-request-failed') return 'Sin conexión. Revisa tu red.';
         if (code === 'auth/operation-not-allowed') return 'El acceso con correo no está habilitado en Firebase.';
         if (code === 'auth/email-already-in-use') return 'Ese correo ya está en uso.';
+        if (code === 'auth/configuration-not-found') return 'Firebase Authentication no está habilitado en el proyecto. Actívalo en Firebase Console → Authentication → Empezar.';
+        if (code === 'auth/invalid-api-key') return 'La API key del proyecto es inválida.';
+        if (code === 'auth/api-key-disabled') return 'La API key está deshabilitada en Firebase Console.';
+        if (code === 'auth/user-disabled') return 'Esta cuenta está deshabilitada.';
         return (err && err.message) || 'Error desconocido';
     }
 
@@ -1801,18 +1807,20 @@
             gateAdminPanel.classList.toggle('hidden', !admin);
             gateVisitPanel.classList.toggle('hidden', admin);
             authError.textContent = '';
+            guestError.textContent = '';
         });
     });
 
     guestEnterBtn.addEventListener('click', () => {
+        guestError.textContent = '';
         const name = guestNameInput.value.trim();
-        if (!name) { showToast('Escribe tu nombre', true); return; }
+        if (!name) { guestError.textContent = 'Escribe tu nombre para continuar.'; return; }
         pendingGuestName = name;
         if (currentUser && currentUser.isAnonymous) {
             loadGuest(currentUser.uid);
         } else {
             auth.signInAnonymously().catch(err => {
-                showToast('No se pudo entrar como visitante: ' + authErrorMessage(err), true);
+                guestError.textContent = authErrorMessage(err);
             });
         }
     });
