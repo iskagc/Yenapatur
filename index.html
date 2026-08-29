@@ -222,6 +222,34 @@
             background: var(--gold);
         }
 
+        .type-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            padding: 10px 10px 8px;
+        }
+
+        .type-filter .tf-chip {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            padding: 6px 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-3);
+            color: var(--text-2);
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .type-filter .tf-chip:hover { border-color: var(--terracotta); color: var(--terracotta); }
+        .type-filter .tf-chip.active { background: var(--terracotta); color: #2a180c; border-color: var(--terracotta); font-weight: 800; }
+
         .student-list {
             flex: 1;
             overflow-y: auto;
@@ -1546,6 +1574,11 @@
                 <select id="studentTypeSelect"></select>
             </div>
         </div>
+        <div class="type-filter" id="typeFilterBar">
+            <button class="tf-chip active" data-tf="all" id="tfAll">Todos (0)</button>
+            <button class="tf-chip" data-tf="intercambio" id="tfInt">Intercambio (0)</button>
+            <button class="tf-chip" data-tf="voluntario" id="tfVol">Voluntarios (0)</button>
+        </div>
         <div class="student-list" id="studentList">
             <div class="empty-state" id="emptyState">
                 <div class="icon">&#127757;</div>
@@ -1771,7 +1804,7 @@
     let weekRef = null;
     let globalVacations = [];
     let globVacUnsub = null;
-    let compareType = null;
+    let typeFilter = null;
     const ADMIN_EMAIL = 'yenapatur@gmail.com';
 
     // ── DOM ──
@@ -2572,6 +2605,13 @@ html += '</div>'
     addStudentBtn.addEventListener('click', () => addStudent(studentNameInput.value, studentCountrySelect.value, studentTypeSelect.value));
     studentNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(studentNameInput.value, studentCountrySelect.value, studentTypeSelect.value); });
 
+    document.querySelectorAll('#typeFilterBar .tf-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            typeFilter = chip.dataset.tf === 'all' ? null : chip.dataset.tf;
+            render();
+        });
+    });
+
     // ── Puerta de acceso (login / visitante) ──
     function authErrorMessage(err) {
         const code = err && err.code ? err.code : '';
@@ -2743,7 +2783,20 @@ html += '</div>'
 
     // ── Render maestro ──
     function render() {
-        headerCount.textContent = students.length + ' estudiante' + (students.length === 1 ? '' : 's');
+        const scope = scopedStudents();
+        headerCount.textContent = typeFilter
+            ? scope.length + ' ' + (scope.length === 1 ? 'estudiante' : 'estudiantes') + ' (' + tipoShort(typeFilter) + ')'
+            : students.length + ' estudiante' + (students.length === 1 ? '' : 's');
+        const tfAll = document.getElementById('tfAll');
+        if (tfAll) {
+            tfAll.classList.toggle('active', !typeFilter);
+            document.getElementById('tfInt').classList.toggle('active', typeFilter === 'intercambio');
+            document.getElementById('tfVol').classList.toggle('active', typeFilter === 'voluntario');
+            const nInt = students.filter(s => s.tipo === 'intercambio').length;
+            document.getElementById('tfInt').textContent = 'Intercambio (' + nInt + ')';
+            document.getElementById('tfVol').textContent = 'Voluntarios (' + (students.length - nInt) + ')';
+            document.getElementById('tfAll').textContent = 'Todos (' + students.length + ')';
+        }
         renderStudentList();
         if (!dataLoaded) {
             scheduleContent.innerHTML = loaderHtml();
@@ -2765,6 +2818,7 @@ html += '</div>'
             studentListEl.innerHTML = '<div class="empty-state"><div class="loader" style="width:28px;height:28px;border-width:3px;margin-bottom:0"></div><p>Cargando…</p></div>';
             return;
         }
+        const scope = scopedStudents();
         if (!students.length) {
             studentListEl.innerHTML = '';
             studentListEl.appendChild(emptyState);
@@ -2772,8 +2826,12 @@ html += '</div>'
             return;
         }
         emptyState.style.display = 'none';
+        if (!scope.length) {
+            studentListEl.innerHTML = '<div class="no-match" style="padding:10px 12px">Sin estudiantes del tipo seleccionado.</div>';
+            return;
+        }
         let html = '';
-        students.forEach(s => {
+        scope.forEach(s => {
             const bc = countBlocks(s);
             const sel = s.id === selectedStudentId ? ' selected' : '';
             html += '<div class="student-card' + sel + '" data-id="' + s.id + '">'
@@ -2906,9 +2964,15 @@ html += '</div>'
     }
 
     // ── Comparación ──
-    function buildAvailability(week, tipo) {
+    function scopedStudents() {
+        return typeFilter ? students.filter(s => s.tipo === typeFilter) : students;
+    }
+
+    function buildAvailability(week, tipo, fromScoped) {
         const dates = week || null;
-        const pool = tipo ? students.filter(s => s.tipo === tipo) : students;
+        const pool = tipo
+            ? (fromScoped === false ? students : scopedStudents()).filter(s => s.tipo === tipo)
+            : scopedStudents();
         const avail = {};
         DAY_KEYS.forEach((dk, di) => {
             avail[dk] = { dayIdx: di };
@@ -2949,17 +3013,27 @@ html += '</div>'
                 + '<p>Agrega al menos 2 estudiantes con horarios asignados<br>para poder comparar disponibilidad.</p></div>';
             return;
         }
+        const scope = scopedStudents();
+        if (scope.length < 2) {
+            compareContent.innerHTML = '<div class="no-data"><div class="icon">&#9878;</div>'
+                + '<h3>' + (scope.length === 1 ? 'Solo hay 1 participante' : 'No hay participantes') + ' del tipo seleccionado</h3>'
+                + '<p>El filtro actual (' + (typeFilter === 'intercambio' ? 'Intercambio' : 'Voluntarios/a') + ') no permite comparar.<br>'
+                + '<button class="rank-toggle" id="resetTypeFilter">Ver todos/as</button></p></div>';
+            const rtf = document.getElementById('resetTypeFilter');
+            if (rtf) rtf.addEventListener('click', () => { typeFilter = null; render(); });
+            return;
+        }
 
         const dates = weekDates();
-        const pool = compareType ? students.filter(s => s.tipo === compareType) : students;
-        const avail = buildAvailability(dates, compareType);
-        const nInt = students.filter(s => s.tipo === 'intercambio').length;
-        const nVol = students.length - nInt;
+        const pool = scope;
+        const avail = buildAvailability(dates, typeFilter);
+        const nInt = scope.filter(s => s.tipo === 'intercambio').length;
+        const nVol = scope.length - nInt;
         const totalCells = BLOCKS.length * DAY_KEYS.length;
-        const noteTxt = compareType
+        const noteTxt = typeFilter
             ? (pool.length
-                ? 'mostrando solo ' + (compareType === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios') + ' &middot; se consideran todos/as en la vista "Todos"'
-                : 'todavía no hay ' + (compareType === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios') + ' &middot; vuelve a "Todos"')
+                ? 'filtrando solo ' + (typeFilter === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios/as') + ' &middot; se consideran todos/as con el filtro "Todos"'
+                : 'todavía no hay ' + (typeFilter === 'intercambio' ? 'estudiantes de intercambio' : 'voluntarios/as') + ' &middot; vuelve a "Todos"')
             : 'los porcentajes incluyen a todos/as';
         let cells100 = 0;
         let totalFree = 0;
@@ -2980,13 +3054,13 @@ html += '</div>'
             + '<div class="comparison-summary">'
             + '<div class="mini-stat"><div class="v">' + cells100 + '</div><div class="l">bloques 100% libres</div></div>'
             + '<div class="mini-stat"><div class="v">' + avg + '%</div><div class="l">disponibilidad media</div></div>'
-            + '<div class="mini-stat"><div class="v">' + pool.length + '</div><div class="l">' + (compareType ? (compareType === 'intercambio' ? 'intercambio' : 'voluntarios') + ' comparados' : 'participantes') + '</div></div>'
+            + '<div class="mini-stat"><div class="v">' + pool.length + '</div><div class="l">' + (typeFilter ? (typeFilter === 'intercambio' ? 'intercambio' : 'voluntarios') + ' comparados' : 'participantes') + '</div></div>'
             + '</div>'
             + '<div class="compare-type">'
-            + '<span class="ct-label">Prioridad:</span>'
-            + '<button class="ct-chip' + (!compareType ? ' active' : '') + '" data-compare-type="all">Todos</button>'
-            + '<button class="ct-chip' + (compareType === 'intercambio' ? ' active' : '') + '" data-compare-type="intercambio">Intercambio</button>'
-            + '<button class="ct-chip' + (compareType === 'voluntario' ? ' active' : '') + '" data-compare-type="voluntario">Voluntarios</button>'
+            + '<span class="ct-label">Mostrar:</span>'
+            + '<button class="ct-chip' + (!typeFilter ? ' active' : '') + '" data-type-filter="all">Todos</button>'
+            + '<button class="ct-chip' + (typeFilter === 'intercambio' ? ' active' : '') + '" data-type-filter="intercambio">Intercambio</button>'
+            + '<button class="ct-chip' + (typeFilter === 'voluntario' ? ' active' : '') + '" data-type-filter="voluntario">Voluntarios</button>'
             + '<span class="ct-note">' + noteTxt + '</span>'
             + '</div>'
             + '<div class="week-ref">'
@@ -3054,8 +3128,8 @@ html += '</div>'
                 + '<span class="rank-day">' + DAYS[it.dayIdx] + '</span>'
                 + '<span class="rank-fill"><span class="inner" style="width:' + it.pct + '%;background:' + fillColor + '"></span></span>'
                 + '<span class="rank-meta"><b>' + it.pct + '%</b> &middot; ' + it.n + ' libres'
-                + '<span class="rank-type">' + (compareType
-                    ? (compareType === 'intercambio' ? nIntF + ' int' : nVolF + ' vol') + ' del pool'
+                + '<span class="rank-type">' + (typeFilter
+                    ? (typeFilter === 'intercambio' ? nIntF + ' int' : nVolF + ' vol') + ' del pool'
                     : nIntF + ' int &middot; ' + nVolF + ' vol') + '</span></span>'
                 + '</div>';
         });
@@ -3098,9 +3172,9 @@ html += '</div>'
             detailFilter = '';
             renderCompare();
         });
-        compareContent.querySelectorAll('[data-compare-type]').forEach(btn => {
+        compareContent.querySelectorAll('[data-type-filter]').forEach(btn => {
             btn.addEventListener('click', () => {
-                compareType = btn.dataset.compareType === 'all' ? null : btn.dataset.compareType;
+                typeFilter = btn.dataset.typeFilter === 'all' ? null : btn.dataset.typeFilter;
                 compareSel = null;
                 rankShowAll = false;
                 detailFilter = '';
@@ -3152,7 +3226,7 @@ html += '</div>'
         const chipsF = document.getElementById('chipsFree');
         const chipsB = document.getElementById('chipsBusy');
         if (!panel || !chipsF || !chipsB) return;
-        const a = buildAvailability(weekDates(), compareType);
+        const a = buildAvailability(weekDates(), typeFilter);
         const cell = a[compareSel.dayKey][compareSel.block];
         const q = detailFilter.toLowerCase();
         chipsF.innerHTML = chipsHtml(cell.free.filter(s => filterMatch(s, q)), 'chip-free');
@@ -3175,15 +3249,16 @@ html += '</div>'
             return;
         }
 
+        const scope = scopedStudents();
         const totalSlots = BLOCKS.length * DAY_KEYS.length;
         let totalAssigned = 0;
         const countryCount = {};
-        students.forEach(s => {
+        scope.forEach(s => {
             totalAssigned += countBlocks(s);
             if (s.country) countryCount[s.country] = (countryCount[s.country] || 0) + 1;
         });
-        const nInt = students.filter(s => s.tipo === 'intercambio').length;
-        const nVol = students.length - nInt;
+        const nInt = scope.filter(s => s.tipo === 'intercambio').length;
+        const nVol = scope.length - nInt;
 
         const avail = buildAvailability();
         let cells100 = 0;
@@ -3194,12 +3269,12 @@ html += '</div>'
                 if (avail[dk][b].pct === 100) cells100++;
                 dayOcc += avail[dk][b].occ.length;
             });
-            dailyOcc[dk] = Math.round((dayOcc / (students.length * BLOCKS.length)) * 100);
+            dailyOcc[dk] = Math.round((dayOcc / (scope.length * BLOCKS.length)) * 100);
         });
 
         let html = '<div class="stats-grid">'
-            + '<div class="stat-card"><div class="stat-label">Estudiantes</div><div class="stat-value">' + students.length + '</div>'
-            + '<div class="stat-detail">en el comparador</div></div>'
+            + '<div class="stat-card"><div class="stat-label">Estudiantes</div><div class="stat-value">' + scope.length + '</div>'
+            + '<div class="stat-detail">' + (typeFilter ? 'con filtro ' + tipoShort(typeFilter) : 'en el comparador') + '</div></div>'
             + '<div class="stat-card"><div class="stat-label">Países representados</div><div class="stat-value" style="color:var(--gold)">' + Object.keys(countryCount).length + '</div>'
             + '<div class="stat-detail">de todo el mundo</div></div>'
             + '<div class="stat-card"><div class="stat-label">Bloques 100% libres</div><div class="stat-value" style="color:var(--olive)">' + cells100 + '</div>'
@@ -3217,7 +3292,7 @@ html += '</div>'
         html += '<div class="section-title">Intercambio vs Voluntarios <span style="font-weight:500;color:var(--text-3);font-size:0.85rem">prioridad para horarios de intercambio</span></div>';
         ['intercambio', 'voluntario'].forEach(ti => {
             const members = students.filter(s => s.tipo === ti);
-            const av = buildAvailability(null, ti);
+            const av = buildAvailability(null, ti, false);
             let cells100 = 0;
             DAY_KEYS.forEach(dk => BLOCKS.forEach(b => { if (av[dk][b].pct === 100) cells100++; }));
             const totalB = members.reduce((a, s) => a + countBlocks(s), 0);
@@ -3238,7 +3313,7 @@ html += '</div>'
         // Carga por estudiante
         html += '<div class="panel-section">';
         html += '<div class="section-title">Carga por estudiante <span style="font-weight:500;color:var(--text-3);font-size:0.85rem">(' + totalSlots + ' bloques posibles cada uno)</span></div>';
-        const sorted = students.slice().sort((a, b) => countBlocks(b) - countBlocks(a));
+        const sorted = scope.slice().sort((a, b) => countBlocks(b) - countBlocks(a));
         sorted.forEach(s => {
             const bc = countBlocks(s);
             const pct = Math.round((bc / totalSlots) * 100);
@@ -3263,7 +3338,7 @@ html += '</div>'
             html += '<div class="day-bar-row">'
                 + '<span class="day-name">' + DAYS[availDayIdx(dk)] + '</span>'
                 + '<div class="bar-container"><div class="bar-fill" style="width:' + occ + '%;background:' + (occ >= 40 ? '#c2452e' : occ >= 20 ? '#c96f43' : '#88a55a') + '"></div></div>'
-                + '<span class="occupancy">' + (students.length ? Math.round(occ) : 0) + '%</span>'
+                + '<span class="occupancy">' + (scope.length ? Math.round(occ) : 0) + '%</span>'
                 + '</div>';
         });
         html += '</div></div>';
