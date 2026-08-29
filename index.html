@@ -417,7 +417,7 @@
 
         .schedule-grid, .comparison-grid {
             display: grid;
-            grid-template-columns: 56px repeat(6, 1fr);
+            grid-template-columns: 78px repeat(6, 1fr);
             gap: 4px;
         }
 
@@ -436,13 +436,37 @@
 
         .grid-cell.row-header {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 1.05rem;
+            gap: 3px;
             font-weight: 700;
             color: var(--gold);
             padding: 0 8px;
         }
+
+        .row-header .row-block { font-size: 1.05rem; line-height: 1; }
+        .row-header .row-time { font-size: 0.58rem; color: var(--text-3); white-space: nowrap; line-height: 1; }
+
+        .lunch-row {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, rgba(217,164,65,0.14), rgba(201,111,67,0.14));
+            border: 1px dashed var(--border-light);
+            color: var(--gold);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin: 1px 0;
+        }
+
+        .lunch-row .lunch-time { font-size: 0.72rem; color: var(--text-3); font-weight: 600; text-transform: none; letter-spacing: 0; }
 
         .grid-cell.block-cell {
             aspect-ratio: 2.1;
@@ -1248,9 +1272,12 @@
         @media (max-width: 620px) {
             .tab-content { padding: 12px; }
             header { padding: 14px 18px; }
-            .schedule-grid, .comparison-grid { grid-template-columns: 40px repeat(6, 1fr); gap: 2px; }
+            .schedule-grid, .comparison-grid { grid-template-columns: 56px repeat(6, 1fr); gap: 2px; }
             .grid-cell.header { font-size: 0.6rem; padding: 8px 2px; letter-spacing: 0; }
-            .grid-cell.row-header { font-size: 0.9rem; }
+            .grid-cell.row-header { font-size: 0.85rem; }
+            .row-header .row-time { font-size: 0.48rem; }
+            .lunch-row { font-size: 0.7rem; padding: 7px 6px; gap: 6px; }
+            .lunch-row .lunch-time { font-size: 0.62rem; }
             .grid-cell.block-cell { aspect-ratio: 1.4; font-size: 0.6rem; }
             .cmp-cell .pct { font-size: 0.65rem; }
             .cmp-cell .cnt { font-size: 0.54rem; }
@@ -1400,6 +1427,19 @@
     const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const DAY_KEYS = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
     const BLOCKS = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+
+    const BLOCK_TIMES = {
+        A: '8:10 – 9:40',
+        B: '9:55 – 11:25',
+        C: '11:40 – 13:10',
+        D: '14:30 – 16:00',
+        E: '16:15 – 17:45',
+        F: '18:00 – 19:30',
+        G: '19:45 – 20:15'
+    };
+
+    const LUNCH_ROW = 'Almuerzo';
+    const LUNCH_RANGE = '13:10 – 14:30';
 
     const EARTH_COLORS = [
         '#c96f43', '#88a55a', '#d9a441', '#b5804f', '#7fb5a0',
@@ -1848,7 +1888,7 @@
         html += '<div class="grid-cell header"></div>';
         DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
         BLOCKS.forEach(block => {
-            html += '<div class="grid-cell row-header">' + block + '</div>';
+            html += '<div class="grid-cell row-header"><span class="row-block">' + block + '</span><span class="row-time">' + BLOCK_TIMES[block] + '</span></div>';
             DAY_KEYS.forEach(dk => {
                 const occ = guestDoc.schedule[dk].includes(block);
                 const cls = occ ? ' block-cell occupied' : ' block-cell';
@@ -1856,6 +1896,9 @@
                 html += '<div class="grid-cell' + cls + '" data-day="' + dk + '" data-block="' + block + '"'
                     + ' style="' + bg + '">' + (occ ? '&#10003;' : '') + '</div>';
             });
+            if (block === 'C') {
+                html += '<div class="grid-cell lunch-row"><span>' + LUNCH_ROW + '</span><span class="lunch-time">' + LUNCH_RANGE + '</span></div>';
+            }
         });
         html += '</div>'
             + '<p style="margin-top:14px;font-size:0.8rem;color:var(--text-3)">Tu privacidad está protegida: solo tú y el equipo administrador pueden ver tu horario.</p>'
@@ -2170,7 +2213,7 @@
         DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
 
         BLOCKS.forEach(block => {
-            html += '<div class="grid-cell row-header">' + block + '</div>';
+            html += '<div class="grid-cell row-header"><span class="row-block">' + block + '</span><span class="row-time">' + BLOCK_TIMES[block] + '</span></div>';
             DAY_KEYS.forEach(dk => {
                 const occ = s.schedule[dk].includes(block);
                 const cls = occ ? ' block-cell occupied' : ' block-cell';
@@ -2178,6 +2221,9 @@
                 html += '<div class="grid-cell' + cls + '" data-day="' + dk + '" data-block="' + block + '"'
                     + ' style="' + bg + '">' + (occ ? '&#10003;' : '') + '</div>';
             });
+            if (block === 'C') {
+                html += '<div class="grid-cell lunch-row"><span>' + LUNCH_ROW + '</span><span class="lunch-time">' + LUNCH_RANGE + '</span></div>';
+            }
         });
 
         html += '</div></div>';
@@ -2283,7 +2329,7 @@
         DAYS.forEach(d => html += '<div class="grid-cell header">' + d + '</div>');
 
         BLOCKS.forEach(block => {
-            html += '<div class="grid-cell row-header">' + block + '</div>';
+            html += '<div class="grid-cell row-header"><span class="row-block">' + block + '</span><span class="row-time">' + BLOCK_TIMES[block] + '</span></div>';
             DAY_KEYS.forEach(dk => {
                 const a = avail[dk][block];
                 const cls = tierClass(a.pct);
@@ -2293,6 +2339,9 @@
                     + '<span class="cnt">' + a.n + ' libres</span>'
                     + '</div>';
             });
+            if (block === 'C') {
+                html += '<div class="grid-cell lunch-row"><span>' + LUNCH_ROW + '</span><span class="lunch-time">' + LUNCH_RANGE + '</span></div>';
+            }
         });
         html += '</div>';
 
